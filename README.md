@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AtlasLab — Prototype technique
 
-## Getting Started
+Prototype de validation puis premier squelette du MVP AtlasLab (LMS + laboratoires virtuels
+techniques pour l'enseignement technique et professionnel ivoirien). Voir la stratégie complète
+dans le workspace `jarvis-starter-kit`, dossier `livrables/business/strategie/` :
+- `2026-07-17_business-plan-marketing_edutech-ci.md`
+- `2026-07-17_architecture-technique_atlaslab.md`
+- `2026-07-17_messages-prospection_atlaslab.md`
 
-First, run the development server:
+## État actuel (17/07/2026)
+
+**Fonctionne dès maintenant, sans rien configurer** (données simulées, pas de base réelle) :
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Ouvrir [http://localhost:3000](http://localhost:3000) — redirige vers `/cours`, qui affiche un
+cours de démonstration ("Électronique — Bases des circuits", basé sur un premier module possible
+pour l'Institut Booster Afrique) avec :
+- une leçon de contenu texte,
+- une leçon de laboratoire **électronique analogique** (`eecircuit-engine`, simulation SPICE réelle,
+  circuit RC — cliquer "Lancer la simulation"),
+- une leçon de laboratoire **logique numérique** (CircuitVerse intégré en iframe).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Les deux intégrations ont été testées et validées le 17/07/2026 (captures d'écran, résultats de
+simulation réels) — voir `app/labo-test-eecircuit/` et `app/labo-test-circuitverse/` pour les
+pages de test d'origine, et `components/LaboEEcircuit.tsx` / `components/LaboCircuitVerse.tsx`
+pour les composants réutilisables qui en sont issus.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Ce qui est réel vs simulé
 
-## Learn More
+| Élément | État |
+|---|---|
+| Pages `/cours`, `/cours/[id]`, `/cours/[id]/lecons/[id]` | Réelles, fonctionnelles |
+| Simulation de circuits (eecircuit-engine, CircuitVerse) | Réelles, validées |
+| Données (établissement, cours, modules, leçons) | **Simulées** (`lib/data/mock.ts`), pas de base de données |
+| Authentification, multi-tenant réel, permissions | Pas encore implémentés |
 
-To learn more about Next.js, take a look at the following resources:
+## Brancher Supabase (prochaine étape technique)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Le schéma complet (tables + Row Level Security) est prêt dans
+`supabase/migrations/20260717000000_init.sql`, et les clients Supabase sont déjà en place
+(`lib/supabase/client.ts`, `lib/supabase/server.ts`). Il manque un projet Supabase réel pour
+remplacer les données simulées par de vraies données multi-établissements :
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Créer un compte gratuit sur [supabase.com](https://supabase.com) et un nouveau projet.
+2. Dans l'onglet SQL Editor du projet, exécuter le contenu de
+   `supabase/migrations/20260717000000_init.sql`.
+3. Copier l'URL du projet et la clé `anon` (Project Settings → API) dans un fichier `.env.local` :
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=xxxxx
+   ```
+4. Remplacer progressivement les appels à `lib/data/mock.ts` par de vraies requêtes via
+   `lib/supabase/server.ts` dans les pages concernées.
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Aucun de ces comptes ne peut être créé à la place de Mamadou (nécessite son email/son
+authentification) — c'est la seule étape technique qui dépend de lui plutôt que de pouvoir être
+faite en autonome.
