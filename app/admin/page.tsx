@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import CreateAccountForm from "./CreateAccountForm";
@@ -33,6 +34,11 @@ export default async function AdminPage() {
 
   return (
     <main style={{ padding: 32, maxWidth: 800, margin: "0 auto" }}>
+      {profile.role === "super_admin" && (
+        <p style={{ marginBottom: 12 }}>
+          <Link href="/admin/etablissements">Gérer les établissements</Link>
+        </p>
+      )}
       <h1 style={{ marginBottom: 24 }}>Comptes</h1>
 
       <section style={{ marginBottom: 32 }}>
