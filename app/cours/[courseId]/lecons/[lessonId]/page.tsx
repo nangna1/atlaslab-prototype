@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getLesson } from "@/lib/data/mock";
+import { createClient } from "@/lib/supabase/server";
 import LaboEEcircuit from "@/components/LaboEEcircuit";
 import LaboCircuitVerse from "@/components/LaboCircuitVerse";
 
@@ -10,9 +10,23 @@ export default async function LessonPage({
   params: Promise<{ courseId: string; lessonId: string }>;
 }) {
   const { courseId, lessonId } = await params;
-  const found = getLesson(courseId, lessonId);
-  if (!found) return notFound();
-  const { course, lesson } = found;
+  const supabase = await createClient();
+
+  const { data: course } = await supabase
+    .from("courses")
+    .select("id, titre")
+    .eq("id", courseId)
+    .single();
+
+  const { data: lesson } = await supabase
+    .from("lessons")
+    .select("id, titre, type, contenu_markdown, labo_type, labo_config")
+    .eq("id", lessonId)
+    .single();
+
+  if (!course || !lesson) return notFound();
+
+  const laboConfig = (lesson.labo_config ?? {}) as { netlist?: string; embed_url?: string };
 
   return (
     <main style={{ padding: 32, maxWidth: 900, margin: "0 auto" }}>
@@ -26,11 +40,11 @@ export default async function LessonPage({
       )}
 
       {lesson.type === "labo" && lesson.labo_type === "eecircuit" && (
-        <LaboEEcircuit netlist={lesson.labo_config?.netlist ?? ""} />
+        <LaboEEcircuit netlist={laboConfig.netlist ?? ""} />
       )}
 
       {lesson.type === "labo" && lesson.labo_type === "circuitverse" && (
-        <LaboCircuitVerse embedUrl={lesson.labo_config?.embed_url ?? ""} />
+        <LaboCircuitVerse embedUrl={laboConfig.embed_url ?? ""} />
       )}
     </main>
   );
