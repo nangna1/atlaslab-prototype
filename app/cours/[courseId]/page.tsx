@@ -31,6 +31,7 @@ export default async function CoursDetailPage({
     .eq("id", user.id)
     .single();
   const isApprenant = profile?.role === "apprenant";
+  const isStaff = ["professeur", "admin_tenant", "super_admin"].includes(profile?.role ?? "");
 
   const { data: course } = await supabase
     .from("courses")
@@ -58,6 +59,40 @@ export default async function CoursDetailPage({
   }
 
   const totalLessons = modules.reduce((sum, m) => sum + m.lessons.length, 0);
+
+  type Eleve = { user_id: string; nom: string; email: string | null; termine: number };
+  let eleves: Eleve[] = [];
+  if (isStaff) {
+    const allLessonIds = modules.flatMap((m) => m.lessons.map((l) => l.id));
+
+    const { data: inscriptions } = await supabase
+      .from("enrollments")
+      .select("user_id, users(nom, email)")
+      .eq("course_id", courseId);
+
+    const { data: progressRows } =
+      allLessonIds.length > 0
+        ? await supabase
+            .from("progress")
+            .select("user_id, lesson_id")
+            .eq("statut", "termine")
+            .in("lesson_id", allLessonIds)
+        : { data: [] };
+
+    const termineParEleve = new Map<string, number>();
+    for (const row of progressRows ?? []) {
+      termineParEleve.set(row.user_id, (termineParEleve.get(row.user_id) ?? 0) + 1);
+    }
+
+    eleves = ((inscriptions ?? []) as unknown as { user_id: string; users: { nom: string; email: string | null } | null }[]).map(
+      (inscription) => ({
+        user_id: inscription.user_id,
+        nom: inscription.users?.nom ?? "—",
+        email: inscription.users?.email ?? null,
+        termine: termineParEleve.get(inscription.user_id) ?? 0,
+      }),
+    );
+  }
 
   return (
     <main style={{ padding: 32, maxWidth: 800, margin: "0 auto" }}>
@@ -99,6 +134,38 @@ export default async function CoursDetailPage({
           </ul>
         </section>
       ))}
+
+      {isStaff && (
+        <section style={{ marginTop: 32 }}>
+          <h2 style={{ fontSize: 18, borderBottom: "1px solid #ddd", paddingBottom: 8 }}>
+            Élèves inscrits
+          </h2>
+          {eleves.length === 0 ? (
+            <p style={{ color: "#666" }}>Aucun élève inscrit.</p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
+              {eleves.map((eleve) => (
+                <div
+                  key={eleve.user_id}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    padding: 12,
+                    border: "1px solid #eee",
+                    borderRadius: 6,
+                  }}
+                >
+                  <span>{eleve.nom}</span>
+                  <span style={{ color: "#666" }}>{eleve.email ?? "—"}</span>
+                  <span style={{ color: "#666" }}>
+                    {eleve.termine}/{totalLessons} terminé(s)
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
     </main>
   );
 }
