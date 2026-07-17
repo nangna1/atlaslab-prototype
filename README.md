@@ -9,23 +9,24 @@ dans le workspace `jarvis-starter-kit`, dossier `livrables/business/strategie/` 
 
 ## État actuel (17/07/2026)
 
-**Fonctionne dès maintenant, sans rien configurer** (données simulées, pas de base réelle) :
+**Nécessite un projet Supabase réel** (voir `.env.local`, non versionné) :
 
 ```bash
 npm install
 npm run dev
 ```
 
-Ouvrir [http://localhost:3000](http://localhost:3000) — redirige vers `/cours`, qui affiche un
-cours de démonstration ("Électronique — Bases des circuits", basé sur un premier module possible
-pour l'Institut Booster Afrique) avec :
+Ouvrir [http://localhost:3000](http://localhost:3000) — redirige vers `/login`. Après connexion,
+`/cours` affiche les cours réels du tenant de l'utilisateur connecté (isolation multi-établissement
+via RLS + claims JWT), par exemple "Électronique — Bases des circuits" (Institut Booster Afrique)
+avec :
 - une leçon de contenu texte,
 - une leçon de laboratoire **électronique analogique** (`eecircuit-engine`, simulation SPICE réelle,
   circuit RC — cliquer "Lancer la simulation"),
 - une leçon de laboratoire **logique numérique** (CircuitVerse intégré en iframe).
 
-Les deux intégrations ont été testées et validées le 17/07/2026 (captures d'écran, résultats de
-simulation réels) — voir `app/labo-test-eecircuit/` et `app/labo-test-circuitverse/` pour les
+Les deux intégrations labo ont été testées et validées le 17/07/2026 (captures d'écran, résultats
+de simulation réels) — voir `app/labo-test-eecircuit/` et `app/labo-test-circuitverse/` pour les
 pages de test d'origine, et `components/LaboEEcircuit.tsx` / `components/LaboCircuitVerse.tsx`
 pour les composants réutilisables qui en sont issus.
 
@@ -35,27 +36,29 @@ pour les composants réutilisables qui en sont issus.
 |---|---|
 | Pages `/cours`, `/cours/[id]`, `/cours/[id]/lecons/[id]` | Réelles, fonctionnelles |
 | Simulation de circuits (eecircuit-engine, CircuitVerse) | Réelles, validées |
-| Données (établissement, cours, modules, leçons) | **Simulées** (`lib/data/mock.ts`), pas de base de données |
-| Authentification, multi-tenant réel, permissions | Pas encore implémentés |
+| Authentification, multi-tenant, RLS | Réelles, testées de bout en bout |
+| Données (établissement, cours, modules, leçons) | Réelles (Supabase), seedées via `supabase/migrations/` |
+| Rôles apprenant / admin_tenant / super_admin, progression, inscriptions | Schéma en place, pas encore d'UI |
 
-## Brancher Supabase (prochaine étape technique)
+## Brancher Supabase (déjà fait pour l'environnement de dev actuel)
 
-Le schéma complet (tables + Row Level Security) est prêt dans
-`supabase/migrations/20260717000000_init.sql`, et les clients Supabase sont déjà en place
-(`lib/supabase/client.ts`, `lib/supabase/server.ts`). Il manque un projet Supabase réel pour
-remplacer les données simulées par de vraies données multi-établissements :
+Le schéma complet (tables + Row Level Security) et les migrations d'auth sont dans
+`supabase/migrations/` (appliquées à la main via le SQL Editor du dashboard, pas de CLI Supabase
+en place) :
+- `20260717000000_init.sql` — schéma + RLS
+- `20260717010000_auth_hook.sql` — hook JWT custom (`tenant_id`, `app_role`) ; **doit aussi être
+  activé manuellement** dans Dashboard → Authentication → Hooks → "Customize Access Token (JWT)
+  Claims"
+- `20260717020000_seed_demo.sql` — données de démo (Institut Booster Afrique)
+- `20260717030000_fix_auth_hook_grant.sql` — grant nécessaire pour que le hook puisse lire
+  `public.users`
 
-1. Créer un compte gratuit sur [supabase.com](https://supabase.com) et un nouveau projet.
-2. Dans l'onglet SQL Editor du projet, exécuter le contenu de
-   `supabase/migrations/20260717000000_init.sql`.
-3. Copier l'URL du projet et la clé `anon` (Project Settings → API) dans un fichier `.env.local` :
-   ```
-   NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=xxxxx
-   ```
-4. Remplacer progressivement les appels à `lib/data/mock.ts` par de vraies requêtes via
-   `lib/supabase/server.ts` dans les pages concernées.
+Pour un nouveau projet Supabase, exécuter ces migrations dans l'ordre, puis créer un utilisateur
+via Dashboard → Authentication → Users et l'insérer dans `public.users` (voir le commentaire en
+tête de `20260717020000_seed_demo.sql`).
 
-Aucun de ces comptes ne peut être créé à la place de Mamadou (nécessite son email/son
-authentification) — c'est la seule étape technique qui dépend de lui plutôt que de pouvoir être
-faite en autonome.
+Variables d'environnement (`.env.local`, non versionné) :
+```
+NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=xxxxx
+```

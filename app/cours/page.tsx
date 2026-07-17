@@ -11,6 +11,21 @@ async function signOut() {
 
 export default async function CoursListPage() {
   const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) redirect("/login");
+
+  const { data: profile } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  const isApprenant = profile?.role === "apprenant";
+
   const { data: courses } = await supabase
     .from("courses")
     .select("id, titre, filiere, tenants(nom), modules(id)");
@@ -27,7 +42,15 @@ export default async function CoursListPage() {
           </button>
         </form>
       </div>
-      <h1 style={{ marginBottom: 24 }}>Mes cours</h1>
+      <h1 style={{ marginBottom: 24 }}>{isApprenant ? "Cours auxquels je suis inscrit" : "Mes cours"}</h1>
+
+      {(courses ?? []).length === 0 && (
+        <p style={{ color: "#666" }}>
+          {isApprenant
+            ? "Vous n'êtes inscrit à aucun cours pour le moment."
+            : "Aucun cours pour le moment."}
+        </p>
+      )}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         {(courses ?? []).map((course) => (
