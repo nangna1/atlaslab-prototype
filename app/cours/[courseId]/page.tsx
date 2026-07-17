@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import EnrollForm from "./EnrollForm";
+import AddModuleForm from "./AddModuleForm";
+import AddLessonForm from "./AddLessonForm";
 
 const TYPE_LABEL: Record<string, string> = {
   contenu: "📄 Contenu",
@@ -141,8 +143,11 @@ export default async function CoursDetailPage({
               </li>
             ))}
           </ul>
+          {isStaff && <AddLessonForm courseId={course.id} moduleId={module.id} />}
         </section>
       ))}
+
+      {isStaff && <AddModuleForm courseId={course.id} />}
 
       {isStaff && (
         <section style={{ marginTop: 32 }}>

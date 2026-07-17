@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import CreateCourseForm from "./CreateCourseForm";
 
 async function signOut() {
   "use server";
@@ -25,6 +26,7 @@ export default async function CoursListPage() {
     .single();
 
   const isApprenant = profile?.role === "apprenant";
+  const isStaff = ["professeur", "admin_tenant", "super_admin"].includes(profile?.role ?? "");
 
   const { data: courses } = await supabase
     .from("courses")
@@ -43,6 +45,8 @@ export default async function CoursListPage() {
         </form>
       </div>
       <h1 style={{ marginBottom: 24 }}>{isApprenant ? "Cours auxquels je suis inscrit" : "Mes cours"}</h1>
+
+      {isStaff && <CreateCourseForm />}
 
       {(courses ?? []).length === 0 && (
         <p style={{ color: "#666" }}>
