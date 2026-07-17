@@ -4,6 +4,9 @@ import { createClient } from "@/lib/supabase/server";
 import EnrollForm from "./EnrollForm";
 import AddModuleForm from "./AddModuleForm";
 import AddLessonForm from "./AddLessonForm";
+import ModuleHeader from "./ModuleHeader";
+import LessonRow from "./LessonRow";
+import CourseHeader from "../CourseHeader";
 
 const TYPE_LABEL: Record<string, string> = {
   contenu: "📄 Contenu",
@@ -12,7 +15,15 @@ const TYPE_LABEL: Record<string, string> = {
   seance_directe: "🎥 Séance en direct",
 };
 
-type Lesson = { id: string; titre: string; ordre: number; type: string };
+type Lesson = {
+  id: string;
+  titre: string;
+  ordre: number;
+  type: string;
+  contenu_markdown: string | null;
+  labo_type: string | null;
+  labo_config: { netlist?: string; embed_url?: string } | null;
+};
 type Module = { id: string; titre: string; ordre: number; lessons: Lesson[] | null };
 
 export default async function CoursDetailPage({
@@ -38,7 +49,9 @@ export default async function CoursDetailPage({
 
   const { data: course } = await supabase
     .from("courses")
-    .select("id, titre, filiere, modules(id, titre, ordre, lessons(id, titre, ordre, type))")
+    .select(
+      "id, titre, filiere, modules(id, titre, ordre, lessons(id, titre, ordre, type, contenu_markdown, labo_type, labo_config))",
+    )
     .eq("id", courseId)
     .single();
 
@@ -110,8 +123,14 @@ export default async function CoursDetailPage({
       <Link href="/cours" style={{ color: "#666" }}>
         ← Retour aux cours
       </Link>
-      <h1>{course.titre}</h1>
-      <p style={{ color: "#666" }}>{course.filiere}</p>
+      {isStaff ? (
+        <CourseHeader courseId={course.id} titre={course.titre} filiere={course.filiere} />
+      ) : (
+        <>
+          <h1>{course.titre}</h1>
+          <p style={{ color: "#666" }}>{course.filiere}</p>
+        </>
+      )}
       {isApprenant && (
         <p style={{ color: "#666" }}>
           {termineeIds.size}/{totalLessons} leçon(s) terminée(s)
@@ -120,28 +139,36 @@ export default async function CoursDetailPage({
 
       {modules.map((module) => (
         <section key={module.id} style={{ marginTop: 24 }}>
-          <h2 style={{ fontSize: 18, borderBottom: "1px solid #ddd", paddingBottom: 8 }}>
-            {module.titre}
-          </h2>
+          {isStaff ? (
+            <ModuleHeader courseId={course.id} moduleId={module.id} titre={module.titre} />
+          ) : (
+            <h2 style={{ fontSize: 18, borderBottom: "1px solid #ddd", paddingBottom: 8 }}>
+              {module.titre}
+            </h2>
+          )}
           <ul style={{ listStyle: "none", padding: 0 }}>
-            {module.lessons.map((lesson) => (
-              <li key={lesson.id} style={{ marginBottom: 8 }}>
-                <Link
-                  href={`/cours/${course.id}/lecons/${lesson.id}`}
-                  style={{
-                    display: "block",
-                    padding: 12,
-                    border: "1px solid #eee",
-                    borderRadius: 6,
-                    textDecoration: "none",
-                    color: "inherit",
-                  }}
-                >
-                  {isApprenant && (termineeIds.has(lesson.id) ? "✓ " : "")}
-                  {TYPE_LABEL[lesson.type]} — {lesson.titre}
-                </Link>
-              </li>
-            ))}
+            {module.lessons.map((lesson) =>
+              isStaff ? (
+                <LessonRow key={lesson.id} courseId={course.id} lesson={lesson} />
+              ) : (
+                <li key={lesson.id} style={{ marginBottom: 8 }}>
+                  <Link
+                    href={`/cours/${course.id}/lecons/${lesson.id}`}
+                    style={{
+                      display: "block",
+                      padding: 12,
+                      border: "1px solid #eee",
+                      borderRadius: 6,
+                      textDecoration: "none",
+                      color: "inherit",
+                    }}
+                  >
+                    {isApprenant && (termineeIds.has(lesson.id) ? "✓ " : "")}
+                    {TYPE_LABEL[lesson.type]} — {lesson.titre}
+                  </Link>
+                </li>
+              ),
+            )}
           </ul>
           {isStaff && <AddLessonForm courseId={course.id} moduleId={module.id} />}
         </section>

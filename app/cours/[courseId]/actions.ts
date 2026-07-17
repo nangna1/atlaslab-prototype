@@ -3,6 +3,26 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
+async function requireStaff() {
+  const supabase = await createClient();
+  const {
+    data: { user: caller },
+  } = await supabase.auth.getUser();
+  if (!caller) return { supabase, error: "Non authentifié." } as const;
+
+  const { data: callerProfile } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", caller.id)
+    .single();
+
+  if (!callerProfile || !["professeur", "admin_tenant", "super_admin"].includes(callerProfile.role)) {
+    return { supabase, error: "Action réservée au staff." } as const;
+  }
+
+  return { supabase, error: null } as const;
+}
+
 export type EnrollState = { error?: string; success?: boolean };
 
 export async function enrollStudent(
@@ -86,6 +106,40 @@ export async function createModule(
   return {};
 }
 
+export type UpdateModuleState = { error?: string; success?: boolean };
+
+export async function updateModule(
+  _prevState: UpdateModuleState,
+  formData: FormData,
+): Promise<UpdateModuleState> {
+  const { supabase, error: authError } = await requireStaff();
+  if (authError) return { error: authError };
+
+  const courseId = String(formData.get("course_id") ?? "");
+  const moduleId = String(formData.get("module_id") ?? "");
+  const titre = String(formData.get("titre") ?? "").trim();
+  if (!courseId || !moduleId || !titre) return { error: "Le titre est requis." };
+
+  const { error } = await supabase.from("modules").update({ titre }).eq("id", moduleId);
+  if (error) return { error: error.message };
+
+  revalidatePath(`/cours/${courseId}`);
+  return { success: true };
+}
+
+export async function deleteModule(formData: FormData): Promise<void> {
+  const { supabase, error: authError } = await requireStaff();
+  if (authError) return;
+
+  const courseId = String(formData.get("course_id") ?? "");
+  const moduleId = String(formData.get("module_id") ?? "");
+  if (!courseId || !moduleId) return;
+
+  await supabase.from("modules").delete().eq("id", moduleId);
+
+  revalidatePath(`/cours/${courseId}`);
+}
+
 export type CreateLessonState = { error?: string };
 
 export async function createLesson(
@@ -155,4 +209,73 @@ export async function createLesson(
 
   revalidatePath(`/cours/${courseId}`);
   return {};
+}
+
+function laboConfigFromForm(formData: FormData, type: string) {
+  const laboType = String(formData.get("labo_type") ?? "");
+  const netlist = String(formData.get("netlist") ?? "").trim();
+  const embedUrl = String(formData.get("embed_url") ?? "").trim();
+
+  if (type !== "labo") return { laboConfig: null, finalLaboType: null, error: null };
+
+  if (laboType === "eecircuit") {
+    return { laboConfig: { netlist }, finalLaboType: "eecircuit", error: null };
+  }
+  if (laboType === "circuitverse") {
+    return { laboConfig: { embed_url: embedUrl }, finalLaboType: "circuitverse", error: null };
+  }
+  return { laboConfig: null, finalLaboType: null, error: "Choisissez un type de laboratoire." };
+}
+
+export type UpdateLessonState = { error?: string; success?: boolean };
+
+export async function updateLesson(
+  _prevState: UpdateLessonState,
+  formData: FormData,
+): Promise<UpdateLessonState> {
+  const { supabase, error: authError } = await requireStaff();
+  if (authError) return { error: authError };
+
+  const courseId = String(formData.get("course_id") ?? "");
+  const lessonId = String(formData.get("lesson_id") ?? "");
+  const titre = String(formData.get("titre") ?? "").trim();
+  const type = String(formData.get("type") ?? "");
+  const contenuMarkdown = String(formData.get("contenu_markdown") ?? "").trim();
+
+  if (!courseId || !lessonId || !titre) return { error: "Le titre est requis." };
+  if (!["contenu", "labo", "quiz", "seance_directe"].includes(type)) {
+    return { error: "Type de leçon invalide." };
+  }
+
+  const { laboConfig, finalLaboType, error: laboError } = laboConfigFromForm(formData, type);
+  if (laboError) return { error: laboError };
+
+  const { error } = await supabase
+    .from("lessons")
+    .update({
+      titre,
+      type,
+      contenu_markdown: contenuMarkdown || null,
+      labo_type: finalLaboType,
+      labo_config: laboConfig,
+    })
+    .eq("id", lessonId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/cours/${courseId}`);
+  return { success: true };
+}
+
+export async function deleteLesson(formData: FormData): Promise<void> {
+  const { supabase, error: authError } = await requireStaff();
+  if (authError) return;
+
+  const courseId = String(formData.get("course_id") ?? "");
+  const lessonId = String(formData.get("lesson_id") ?? "");
+  if (!courseId || !lessonId) return;
+
+  await supabase.from("lessons").delete().eq("id", lessonId);
+
+  revalidatePath(`/cours/${courseId}`);
 }
