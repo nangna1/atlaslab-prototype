@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import EnrollForm from "./EnrollForm";
 
 const TYPE_LABEL: Record<string, string> = {
   contenu: "📄 Contenu",
@@ -62,6 +63,7 @@ export default async function CoursDetailPage({
 
   type Eleve = { user_id: string; nom: string; email: string | null; termine: number };
   let eleves: Eleve[] = [];
+  let candidats: { id: string; nom: string; email: string | null }[] = [];
   if (isStaff) {
     const allLessonIds = modules.flatMap((m) => m.lessons.map((l) => l.id));
 
@@ -92,6 +94,13 @@ export default async function CoursDetailPage({
         termine: termineParEleve.get(inscription.user_id) ?? 0,
       }),
     );
+
+    const inscritIds = new Set(eleves.map((e) => e.user_id));
+    const { data: apprenants } = await supabase
+      .from("users")
+      .select("id, nom, email")
+      .eq("role", "apprenant");
+    candidats = (apprenants ?? []).filter((a) => !inscritIds.has(a.id));
   }
 
   return (
@@ -164,6 +173,7 @@ export default async function CoursDetailPage({
               ))}
             </div>
           )}
+          <EnrollForm courseId={course.id} candidats={candidats} />
         </section>
       )}
     </main>
