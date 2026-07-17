@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 const TYPE_LABEL: Record<string, string> = {
@@ -20,6 +20,18 @@ export default async function CoursDetailPage({
   const { courseId } = await params;
   const supabase = await createClient();
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { data: profile } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+  const isApprenant = profile?.role === "apprenant";
+
   const { data: course } = await supabase
     .from("courses")
     .select("id, titre, filiere, modules(id, titre, ordre, lessons(id, titre, ordre, type))")
@@ -35,6 +47,18 @@ export default async function CoursDetailPage({
       lessons: [...(module.lessons ?? [])].sort((a, b) => a.ordre - b.ordre),
     }));
 
+  let termineeIds = new Set<string>();
+  if (isApprenant) {
+    const { data: progress } = await supabase
+      .from("progress")
+      .select("lesson_id")
+      .eq("user_id", user.id)
+      .eq("statut", "termine");
+    termineeIds = new Set((progress ?? []).map((p) => p.lesson_id));
+  }
+
+  const totalLessons = modules.reduce((sum, m) => sum + m.lessons.length, 0);
+
   return (
     <main style={{ padding: 32, maxWidth: 800, margin: "0 auto" }}>
       <Link href="/cours" style={{ color: "#666" }}>
@@ -42,6 +66,11 @@ export default async function CoursDetailPage({
       </Link>
       <h1>{course.titre}</h1>
       <p style={{ color: "#666" }}>{course.filiere}</p>
+      {isApprenant && (
+        <p style={{ color: "#666" }}>
+          {termineeIds.size}/{totalLessons} leçon(s) terminée(s)
+        </p>
+      )}
 
       {modules.map((module) => (
         <section key={module.id} style={{ marginTop: 24 }}>
@@ -62,6 +91,7 @@ export default async function CoursDetailPage({
                     color: "inherit",
                   }}
                 >
+                  {isApprenant && (termineeIds.has(lesson.id) ? "✓ " : "")}
                   {TYPE_LABEL[lesson.type]} — {lesson.titre}
                 </Link>
               </li>
