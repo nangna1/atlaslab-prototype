@@ -279,3 +279,57 @@ export async function deleteLesson(formData: FormData): Promise<void> {
 
   revalidatePath(`/cours/${courseId}`);
 }
+
+export type CreateSeanceState = { error?: string };
+
+export async function createSeance(
+  _prevState: CreateSeanceState,
+  formData: FormData,
+): Promise<CreateSeanceState> {
+  const supabase = await createClient();
+  const {
+    data: { user: caller },
+  } = await supabase.auth.getUser();
+  if (!caller) return { error: "Non authentifié." };
+
+  const { data: callerProfile } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", caller.id)
+    .single();
+
+  if (!callerProfile || !["professeur", "admin_tenant", "super_admin"].includes(callerProfile.role)) {
+    return { error: "Action réservée au staff." };
+  }
+
+  const courseId = String(formData.get("course_id") ?? "");
+  const dateHeure = String(formData.get("date_heure") ?? "");
+  const lienVisio = String(formData.get("lien_visio") ?? "").trim();
+
+  if (!courseId || !dateHeure) return { error: "La date/heure est requise." };
+
+  const { error } = await supabase.from("live_sessions").insert({
+    course_id: courseId,
+    date_heure: new Date(dateHeure).toISOString(),
+    lien_visio: lienVisio || null,
+    professeur_id: callerProfile.role === "professeur" ? caller.id : null,
+  });
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/cours/${courseId}`);
+  return {};
+}
+
+export async function deleteSeance(formData: FormData): Promise<void> {
+  const { supabase, error: authError } = await requireStaff();
+  if (authError) return;
+
+  const courseId = String(formData.get("course_id") ?? "");
+  const seanceId = String(formData.get("seance_id") ?? "");
+  if (!courseId || !seanceId) return;
+
+  await supabase.from("live_sessions").delete().eq("id", seanceId);
+
+  revalidatePath(`/cours/${courseId}`);
+}

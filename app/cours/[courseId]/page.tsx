@@ -7,6 +7,8 @@ import AddLessonForm from "./AddLessonForm";
 import ModuleHeader from "./ModuleHeader";
 import LessonRow from "./LessonRow";
 import CourseHeader from "../CourseHeader";
+import SeanceForm from "./SeanceForm";
+import SeanceItem from "./SeanceItem";
 
 const TYPE_LABEL: Record<string, string> = {
   contenu: "📄 Contenu",
@@ -118,6 +120,12 @@ export default async function CoursDetailPage({
     candidats = (apprenants ?? []).filter((a) => !inscritIds.has(a.id));
   }
 
+  const { data: seances } = await supabase
+    .from("live_sessions")
+    .select("id, date_heure, lien_visio")
+    .eq("course_id", courseId)
+    .order("date_heure");
+
   return (
     <main style={{ padding: 32, maxWidth: 800, margin: "0 auto" }}>
       <Link href="/cours" style={{ color: "#666" }}>
@@ -175,6 +183,22 @@ export default async function CoursDetailPage({
       ))}
 
       {isStaff && <AddModuleForm courseId={course.id} />}
+
+      <section style={{ marginTop: 32 }}>
+        <h2 style={{ fontSize: 18, borderBottom: "1px solid #ddd", paddingBottom: 8 }}>
+          Séances en direct
+        </h2>
+        {(seances ?? []).length === 0 ? (
+          <p style={{ color: "#666" }}>Aucune séance programmée.</p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
+            {(seances ?? []).map((seance) => (
+              <SeanceItem key={seance.id} courseId={course.id} seance={seance} isStaff={isStaff} />
+            ))}
+          </div>
+        )}
+        {isStaff && <SeanceForm courseId={course.id} />}
+      </section>
 
       {isStaff && (
         <section style={{ marginTop: 32 }}>
