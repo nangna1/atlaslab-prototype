@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import CreateAccountForm from "./CreateAccountForm";
+import ImportAccountsForm from "./ImportAccountsForm";
 import AccountRow from "./AccountRow";
 
 export default async function AdminPage() {
@@ -46,6 +47,10 @@ export default async function AdminPage() {
       <section className="mb-10">
         <h2 className="mb-3 text-lg font-semibold text-gray-900">Créer un compte</h2>
         <CreateAccountForm />
+      </section>
+
+      <section className="mb-10">
+        <ImportAccountsForm />
       </section>
 
       <section>
