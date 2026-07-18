@@ -29,6 +29,9 @@ export default async function AdminPage() {
   return (
     <main className="page">
       <div className="mb-3 flex gap-4">
+        <Link href="/admin/tableau-de-bord" className="btn-link">
+          Tableau de bord
+        </Link>
         <Link href="/admin/etablissement" className="btn-link">
           Personnaliser mon établissement
         </Link>
