@@ -58,18 +58,27 @@ export default async function CoursListPage() {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={tenant.logo_url} alt={tenant.nom} className="h-10 w-auto" />
         ) : (
-          <p className="text-sm font-medium text-gray-500">{tenant?.nom}</p>
+          <p
+            className="text-sm font-medium"
+            style={{ fontFamily: "var(--font-mono)", color: "var(--ink-soft)" }}
+          >
+            {tenant?.nom}
+          </p>
         )}
         <div className="flex items-center gap-4">
           <NotificationBell notifications={notifications ?? []} />
           <form action={signOut}>
-            <button type="submit" className="btn-link text-gray-500 hover:text-gray-700">
+            <button
+              type="submit"
+              className="btn-link"
+              style={{ color: "var(--ink-soft)" }}
+            >
               Se déconnecter
             </button>
           </form>
         </div>
       </div>
-      <h1 className="mb-6 text-2xl font-semibold text-gray-900">
+      <h1 className="mb-6 text-2xl font-bold" style={{ color: "var(--ink)" }}>
         {isApprenant ? "Cours auxquels je suis inscrit" : "Mes cours"}
       </h1>
 
@@ -81,7 +90,7 @@ export default async function CoursListPage() {
       )}
 
       {(courses ?? []).length === 0 && (
-        <p className="text-sm text-gray-500">
+        <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
           {isApprenant
             ? "Vous n'êtes inscrit à aucun cours pour le moment."
             : "Aucun cours pour le moment."}
@@ -91,10 +100,15 @@ export default async function CoursListPage() {
       <div className="flex flex-col gap-4">
         {(courses ?? []).map((course) => (
           <Link key={course.id} href={`/cours/${course.id}`} className="card-link">
-            <h2 className="text-lg font-semibold text-gray-900">{course.titre}</h2>
-            <p className="mt-1 text-sm text-gray-500">
+            <p
+              className="text-xs font-medium tracking-[0.06em] uppercase"
+              style={{ fontFamily: "var(--font-mono)", color: "var(--ink-soft)" }}
+            >
               {course.filiere} · {course.modules?.length ?? 0} module(s)
             </p>
+            <h2 className="mt-1 text-lg font-semibold" style={{ color: "var(--ink)" }}>
+              {course.titre}
+            </h2>
           </Link>
         ))}
       </div>

@@ -1,22 +1,54 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f9fafb;
-  --foreground: #111827;
+  --ink: #16202c;
+  --ink-mid: #334150;
+  --ink-soft: #52626f;
+  --ink-faint: #7e9186;
+  --background: #eef3ee;
+  --background-muted: #e3ece3;
+  --surface: #ffffff;
+  --line: #d2ddd5;
+  --line-strong: #a8b8ac;
   --brand: #4f46e5;
+  --brand-soft: #e8e6fb;
+  --brand-ink: #ffffff;
+  --foreground: var(--ink);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-body);
   --font-mono: var(--font-geist-mono);
+
+  /* Remappe la palette Tailwind gray par defaut sur les tokens AtlasLab :
+     tout usage existant de text-gray, bg-gray, border-gray herite
+     automatiquement de la teinte ardoise / vert clair. */
+  --color-gray-50: var(--background);
+  --color-gray-100: var(--background-muted);
+  --color-gray-200: var(--line);
+  --color-gray-300: var(--line-strong);
+  --color-gray-400: var(--ink-faint);
+  --color-gray-500: var(--ink-soft);
+  --color-gray-600: var(--ink-soft);
+  --color-gray-700: var(--ink-mid);
+  --color-gray-800: var(--ink-mid);
+  --color-gray-900: var(--ink);
+  --color-gray-950: var(--ink);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-body), Georgia, serif;
+  background-image: radial-gradient(circle, var(--line-strong) 0.6px, transparent 0.6px);
+  background-size: 22px 22px;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display), "Arial Narrow", sans-serif;
+  letter-spacing: -0.01em;
 }
 
 @layer components {
@@ -25,45 +57,96 @@ body {
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white transition disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-[3px] px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
+    font-family: var(--font-display), sans-serif;
+    letter-spacing: 0.01em;
     background-color: var(--brand);
+    border: 1px solid var(--brand);
+    color: var(--brand-ink);
   }
   .btn-primary:hover:not(:disabled) {
     filter: brightness(0.9);
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-[3px] border px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+    font-family: var(--font-display), sans-serif;
+    border-color: var(--line-strong);
+    background: var(--surface);
+    color: var(--ink);
+  }
+  .btn-secondary:hover:not(:disabled) {
+    background: var(--background);
   }
   .btn-danger {
-    @apply inline-flex items-center justify-center gap-2 rounded-md border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-[3px] border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50;
+    font-family: var(--font-display), sans-serif;
   }
   .btn-sm {
     @apply px-2.5! py-1! text-xs!;
   }
   .btn-link {
-    @apply text-sm font-medium hover:underline;
+    @apply text-sm font-semibold hover:underline;
+    font-family: var(--font-display), sans-serif;
     color: var(--brand);
   }
 
   .input {
-    @apply block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none;
+    @apply block w-full rounded-[3px] border px-3 py-2 text-sm outline-none;
+    border-color: var(--line-strong);
+    background: var(--surface);
+    color: var(--ink);
   }
   .input:focus {
     border-color: var(--brand);
     box-shadow: 0 0 0 1px var(--brand);
   }
   .label {
-    @apply mb-1 block text-sm font-medium text-gray-700;
+    @apply mb-1 block text-sm font-medium;
+    color: var(--ink-soft);
   }
 
   .card {
-    @apply rounded-lg border border-gray-200 bg-white p-4 shadow-sm;
+    @apply relative rounded-[4px] border p-4 shadow-sm;
+    border-color: var(--line);
+    background: var(--surface);
+  }
+  .card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 1rem;
+    width: 22px;
+    height: 2px;
+    background: var(--brand);
   }
   .card-link {
-    @apply block rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition hover:border-indigo-300 hover:shadow-md;
+    @apply relative block rounded-[4px] border p-4 shadow-sm transition hover:shadow-md;
+    border-color: var(--line-strong);
+    background: var(--surface);
+  }
+  .card-link:hover {
+    border-color: var(--brand);
+  }
+  .card-link::before,
+  .card-link::after {
+    content: "";
+    position: absolute;
+    top: -3.5px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--brand);
+  }
+  .card-link::before {
+    left: -3.5px;
+  }
+  .card-link::after {
+    right: -3.5px;
   }
   .card-dashed {
-    @apply rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4;
+    @apply rounded-[4px] border border-dashed p-4;
+    border-color: var(--line-strong);
+    background: var(--background);
   }
 
   .badge-success {
