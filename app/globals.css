@@ -3,6 +3,7 @@
 :root {
   --background: #f9fafb;
   --foreground: #111827;
+  --brand: #4f46e5;
 }
 
 @theme inline {
@@ -24,7 +25,11 @@ body {
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white transition disabled:cursor-not-allowed disabled:opacity-50;
+    background-color: var(--brand);
+  }
+  .btn-primary:hover:not(:disabled) {
+    filter: brightness(0.9);
   }
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50;
@@ -36,11 +41,16 @@ body {
     @apply px-2.5! py-1! text-xs!;
   }
   .btn-link {
-    @apply text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:underline;
+    @apply text-sm font-medium hover:underline;
+    color: var(--brand);
   }
 
   .input {
-    @apply block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500;
+    @apply block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none;
+  }
+  .input:focus {
+    border-color: var(--brand);
+    box-shadow: 0 0 0 1px var(--brand);
   }
   .label {
     @apply mb-1 block text-sm font-medium text-gray-700;

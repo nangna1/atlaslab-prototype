@@ -28,13 +28,16 @@ export default async function AdminPage() {
 
   return (
     <main className="page">
-      {profile.role === "super_admin" && (
-        <p className="mb-3">
+      <div className="mb-3 flex gap-4">
+        <Link href="/admin/etablissement" className="btn-link">
+          Personnaliser mon établissement
+        </Link>
+        {profile.role === "super_admin" && (
           <Link href="/admin/etablissements" className="btn-link">
             Gérer les établissements
           </Link>
-        </p>
-      )}
+        )}
+      </div>
       <h1 className="mb-6 text-2xl font-semibold text-gray-900">Comptes</h1>
 
       <section className="mb-10">

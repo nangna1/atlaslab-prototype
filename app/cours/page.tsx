@@ -21,23 +21,37 @@ export default async function CoursListPage() {
 
   const { data: profile } = await supabase
     .from("users")
-    .select("role")
+    .select("role, tenant_id")
     .eq("id", user.id)
     .single();
 
   const isApprenant = profile?.role === "apprenant";
   const isStaff = ["professeur", "admin_tenant", "super_admin"].includes(profile?.role ?? "");
 
+  const { data: tenant } = profile?.tenant_id
+    ? await supabase
+        .from("tenants")
+        .select("nom, logo_url, couleur_primaire")
+        .eq("id", profile.tenant_id)
+        .single()
+    : { data: null };
+
   const { data: courses } = await supabase
     .from("courses")
-    .select("id, titre, filiere, tenants(nom), modules(id)");
-
-  const tenantNom = (courses?.[0] as { tenants?: { nom?: string } } | undefined)?.tenants?.nom ?? "";
+    .select("id, titre, filiere, modules(id)");
 
   return (
-    <main className="page">
-      <div className="mb-6 flex items-baseline justify-between">
-        <p className="text-sm font-medium text-gray-500">{tenantNom}</p>
+    <main
+      className="page"
+      style={{ "--brand": tenant?.couleur_primaire || undefined } as React.CSSProperties}
+    >
+      <div className="mb-6 flex items-center justify-between">
+        {tenant?.logo_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={tenant.logo_url} alt={tenant.nom} className="h-10 w-auto" />
+        ) : (
+          <p className="text-sm font-medium text-gray-500">{tenant?.nom}</p>
+        )}
         <form action={signOut}>
           <button type="submit" className="btn-link text-gray-500 hover:text-gray-700">
             Se déconnecter

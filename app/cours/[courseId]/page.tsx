@@ -44,11 +44,15 @@ export default async function CoursDetailPage({
 
   const { data: profile } = await supabase
     .from("users")
-    .select("role")
+    .select("role, tenant_id")
     .eq("id", user.id)
     .single();
   const isApprenant = profile?.role === "apprenant";
   const isStaff = ["professeur", "admin_tenant", "super_admin"].includes(profile?.role ?? "");
+
+  const { data: tenant } = profile?.tenant_id
+    ? await supabase.from("tenants").select("couleur_primaire").eq("id", profile.tenant_id).single()
+    : { data: null };
 
   const { data: course } = await supabase
     .from("courses")
@@ -128,7 +132,10 @@ export default async function CoursDetailPage({
     .order("date_heure");
 
   return (
-    <main className="page">
+    <main
+      className="page"
+      style={{ "--brand": tenant?.couleur_primaire || undefined } as React.CSSProperties}
+    >
       <Link href="/cours" className="text-sm text-gray-500 hover:text-gray-700">
         ← Retour aux cours
       </Link>
