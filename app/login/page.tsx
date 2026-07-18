@@ -32,7 +32,8 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-gray-50 px-6">
       <div className="w-full max-w-sm">
-        <h1 className="mb-1 text-center text-2xl font-semibold text-indigo-600">AtlasLab</h1>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo-atlaslab.png" alt="AtlasLab" className="mx-auto mb-2 h-20 w-auto" />
         <p className="mb-6 text-center text-sm text-gray-500">Connexion à votre espace</p>
         <form onSubmit={handleSubmit} className="card flex flex-col gap-4">
           <label>
