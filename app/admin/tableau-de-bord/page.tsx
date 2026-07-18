@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getDashboardStats } from "@/lib/dashboard-data";
 import ActivityChart, { type ActivityBucket } from "./ActivityChart";
 
 function dayKey(d: Date): string {
@@ -51,9 +52,7 @@ export default async function TableauDeBordPage() {
     .eq("id", profile.tenant_id)
     .single();
 
-  const { data: tenantUsers } = await supabase.from("users").select("id, nom, role");
-  const eleves = (tenantUsers ?? []).filter((u) => u.role === "apprenant");
-  const professeurs = (tenantUsers ?? []).filter((u) => u.role === "professeur");
+  const { eleveStats, profStats } = await getDashboardStats(supabase);
 
   const { data: progressRows } = await supabase
     .from("progress")
@@ -70,9 +69,6 @@ export default async function TableauDeBordPage() {
     statut: string;
     live_sessions: { date_heure: string } | null;
   }[];
-
-  const { data: courseRows } = await supabase.from("courses").select("id, professeur_id, created_at");
-  const { data: sessionRows } = await supabase.from("live_sessions").select("professeur_id, date_heure");
 
   // --- Buckets journaliers (14 derniers jours) et hebdomadaires (8 dernières semaines) ---
   const today = new Date();
@@ -120,54 +116,6 @@ export default async function TableauDeBordPage() {
     presences: bucketCounts(presencesDates, weeklyKeys, mondayKey)[i],
   }));
 
-  // --- Récapitulatif élèves ---
-  const leconsParEleve = new Map<string, number>();
-  const devoirsParEleve = new Map<string, number>();
-  const derniereParEleve = new Map<string, string>();
-  for (const row of progressRows ?? []) {
-    leconsParEleve.set(row.user_id, (leconsParEleve.get(row.user_id) ?? 0) + 1);
-    const prev = derniereParEleve.get(row.user_id);
-    if (!prev || row.updated_at > prev) derniereParEleve.set(row.user_id, row.updated_at);
-  }
-  for (const row of submissionRows ?? []) {
-    devoirsParEleve.set(row.user_id, (devoirsParEleve.get(row.user_id) ?? 0) + 1);
-    const prev = derniereParEleve.get(row.user_id);
-    if (!prev || row.submitted_at > prev) derniereParEleve.set(row.user_id, row.submitted_at);
-  }
-
-  const eleveStats = eleves.map((e) => ({
-    id: e.id,
-    nom: e.nom,
-    leconsTerminees: leconsParEleve.get(e.id) ?? 0,
-    devoirsRendus: devoirsParEleve.get(e.id) ?? 0,
-    derniereActivite: derniereParEleve.get(e.id) ?? null,
-  }));
-
-  // --- Récapitulatif professeurs ---
-  const coursParProf = new Map<string, number>();
-  const seancesParProf = new Map<string, number>();
-  const derniereParProf = new Map<string, string>();
-  for (const c of courseRows ?? []) {
-    if (!c.professeur_id) continue;
-    coursParProf.set(c.professeur_id, (coursParProf.get(c.professeur_id) ?? 0) + 1);
-    const prev = derniereParProf.get(c.professeur_id);
-    if (!prev || c.created_at > prev) derniereParProf.set(c.professeur_id, c.created_at);
-  }
-  for (const s of sessionRows ?? []) {
-    if (!s.professeur_id) continue;
-    seancesParProf.set(s.professeur_id, (seancesParProf.get(s.professeur_id) ?? 0) + 1);
-    const prev = derniereParProf.get(s.professeur_id);
-    if (!prev || s.date_heure > prev) derniereParProf.set(s.professeur_id, s.date_heure);
-  }
-
-  const profStats = professeurs.map((p) => ({
-    id: p.id,
-    nom: p.nom,
-    coursCrees: coursParProf.get(p.id) ?? 0,
-    seancesProgrammees: seancesParProf.get(p.id) ?? 0,
-    derniereActivite: derniereParProf.get(p.id) ?? null,
-  }));
-
   const formatDate = (iso: string | null) =>
     iso ? new Date(iso).toLocaleDateString("fr-FR", { dateStyle: "medium" }) : "—";
 
@@ -176,9 +124,12 @@ export default async function TableauDeBordPage() {
       <Link href="/admin" className="text-sm text-gray-500 hover:text-gray-700">
         ← Retour aux comptes
       </Link>
-      <h1 className="mt-2 mb-6 text-2xl font-semibold text-gray-900">
-        Tableau de bord — {tenant?.nom}
-      </h1>
+      <div className="mt-2 mb-6 flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-2xl font-semibold text-gray-900">Tableau de bord — {tenant?.nom}</h1>
+        <a href="/admin/tableau-de-bord/export" className="btn-secondary">
+          Exporter en CSV
+        </a>
+      </div>
 
       <section className="mb-10">
         <h2 className="mb-3 text-lg font-semibold text-gray-900">Activité de l&apos;établissement</h2>
