@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { deleteSeance } from "./actions";
 import AttendanceForm from "./AttendanceForm";
+import VideoRoom from "./VideoRoom";
 
 type Seance = { id: string; date_heure: string; lien_visio: string | null };
 
@@ -28,6 +29,7 @@ export default function SeanceItem({
   attendanceParEleve?: Record<string, string>;
 }) {
   const [showAttendance, setShowAttendance] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
   const dateLabel = new Date(seance.date_heure).toLocaleString("fr-FR", {
     dateStyle: "medium",
     timeStyle: "short",
@@ -44,7 +46,9 @@ export default function SeanceItem({
             Rejoindre
           </a>
         ) : (
-          <span className="text-sm text-gray-500">—</span>
+          <button type="button" onClick={() => setShowVideo((v) => !v)} className="btn-link text-sm">
+            {showVideo ? "Masquer la visio" : "Rejoindre la visio"}
+          </button>
         )}
         {isStaff && (
           <button
@@ -78,6 +82,7 @@ export default function SeanceItem({
           initialStatuts={attendanceParEleve ?? {}}
         />
       )}
+      {!seance.lien_visio && showVideo && <VideoRoom seanceId={seance.id} />}
     </div>
   );
 }
