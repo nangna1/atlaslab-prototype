@@ -59,6 +59,12 @@ export default async function CoursListPage({
     .order("created_at", { ascending: false })
     .limit(10);
 
+  const { count: unreadMessages } = await supabase
+    .from("messages")
+    .select("id", { count: "exact", head: true })
+    .eq("recipient_id", user.id)
+    .eq("lu", false);
+
   return (
     <main
       className="page"
@@ -77,6 +83,17 @@ export default async function CoursListPage({
           </p>
         )}
         <div className="flex items-center gap-4">
+          <Link href="/messages" className="btn-link relative" style={{ color: "var(--ink-soft)" }}>
+            Messages
+            {!!unreadMessages && unreadMessages > 0 && (
+              <span
+                aria-hidden="true"
+                className="absolute -top-2 -right-3 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-medium text-white"
+              >
+                {unreadMessages}
+              </span>
+            )}
+          </Link>
           <NotificationBell notifications={notifications ?? []} />
           <form action={signOut}>
             <button
