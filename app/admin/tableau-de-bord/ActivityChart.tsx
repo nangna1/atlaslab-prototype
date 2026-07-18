@@ -151,6 +151,36 @@ export default function ActivityChart({
             }`
           : "Survolez une barre pour le détail."}
       </p>
+
+      <details className="mt-3">
+        <summary className="cursor-pointer text-sm text-gray-600 hover:text-gray-900">
+          Voir les données en tableau
+        </summary>
+        <table className="mt-2 w-full text-left text-sm">
+          <thead>
+            <tr className="border-b border-gray-200 text-gray-500">
+              <th className="py-1 pr-2 font-medium">{mode === "jour" ? "Jour" : "Semaine du"}</th>
+              {SERIES_LABELS.map((label) => (
+                <th key={label} className="py-1 pr-2 font-medium">
+                  {label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {buckets.map((b) => (
+              <tr key={b.label} className="border-b border-gray-100 text-gray-700">
+                <td className="py-1 pr-2">{b.label}</td>
+                {SERIES_KEYS.map((key) => (
+                  <td key={key} className="py-1 pr-2">
+                    {b[key]}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </details>
     </div>
   );
 }

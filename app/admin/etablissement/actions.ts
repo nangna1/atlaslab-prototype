@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { hasSufficientContrast } from "@/lib/color-contrast";
 
 export type UpdateBrandingState = { error?: string; success?: boolean };
 
@@ -36,6 +37,12 @@ export async function updateBranding(
   const representantLegal = String(formData.get("representant_legal") ?? "").trim();
   const certificatModele = String(formData.get("certificat_modele") ?? "").trim();
   const logoFile = formData.get("logo") as File | null;
+
+  if (couleurPrimaire && !hasSufficientContrast(couleurPrimaire)) {
+    return {
+      error: "Cette couleur est trop claire : le texte des boutons ne serait plus lisible. Choisissez une teinte plus foncée.",
+    };
+  }
 
   const updates: Record<string, string> = {};
   if (couleurPrimaire) updates.couleur_primaire = couleurPrimaire;
