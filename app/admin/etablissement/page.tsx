@@ -26,7 +26,7 @@ export default async function EtablissementSettingsPage() {
 
   const { data: tenant } = await supabase
     .from("tenants")
-    .select("nom, logo_url, couleur_primaire")
+    .select("nom, logo_url, couleur_primaire, adresse, numero_agrement, representant_legal, certificat_modele")
     .eq("id", profile.tenant_id)
     .single();
 
@@ -41,6 +41,10 @@ export default async function EtablissementSettingsPage() {
       <BrandingForm
         currentLogoUrl={tenant?.logo_url ?? null}
         currentColor={tenant?.couleur_primaire ?? "#4f46e5"}
+        currentAdresse={tenant?.adresse ?? ""}
+        currentNumeroAgrement={tenant?.numero_agrement ?? ""}
+        currentRepresentantLegal={tenant?.representant_legal ?? ""}
+        currentCertificatModele={tenant?.certificat_modele ?? "classique"}
       />
     </main>
   );

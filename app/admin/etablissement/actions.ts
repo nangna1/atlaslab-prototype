@@ -31,10 +31,20 @@ export async function updateBranding(
 
   const tenantId = callerProfile.tenant_id;
   const couleurPrimaire = String(formData.get("couleur_primaire") ?? "").trim();
+  const adresse = String(formData.get("adresse") ?? "").trim();
+  const numeroAgrement = String(formData.get("numero_agrement") ?? "").trim();
+  const representantLegal = String(formData.get("representant_legal") ?? "").trim();
+  const certificatModele = String(formData.get("certificat_modele") ?? "").trim();
   const logoFile = formData.get("logo") as File | null;
 
   const updates: Record<string, string> = {};
   if (couleurPrimaire) updates.couleur_primaire = couleurPrimaire;
+  if (adresse) updates.adresse = adresse;
+  if (numeroAgrement) updates.numero_agrement = numeroAgrement;
+  if (representantLegal) updates.representant_legal = representantLegal;
+  if (["classique", "moderne", "sceau"].includes(certificatModele)) {
+    updates.certificat_modele = certificatModele;
+  }
 
   if (logoFile && logoFile.size > 0) {
     const ext = logoFile.name.split(".").pop() || "png";

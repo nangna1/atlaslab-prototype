@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import PrintButton from "./PrintButton";
+import CertificateTemplate from "./CertificateTemplate";
 
 type Module = { lessons: { id: string }[] | null };
 
@@ -41,7 +42,9 @@ export default async function CertificatPage({
   const { data: tenant } = profile?.tenant_id
     ? await supabase
         .from("tenants")
-        .select("nom, logo_url, couleur_primaire")
+        .select(
+          "nom, logo_url, couleur_primaire, adresse, numero_agrement, representant_legal, certificat_modele",
+        )
         .eq("id", profile.tenant_id)
         .single()
     : { data: null };
@@ -112,30 +115,20 @@ export default async function CertificatPage({
         ← Retour à {course.titre}
       </Link>
 
-      <div
-        className="flex flex-col items-center gap-4 rounded-lg border-4 p-12 text-center print:border-0"
-        style={{ borderColor: "var(--brand)" }}
-      >
-        {tenant?.logo_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={tenant.logo_url} alt={tenant.nom} className="h-16 w-auto" />
-        ) : (
-          <p className="text-sm font-medium text-gray-500">{tenant?.nom}</p>
-        )}
-
-        <p className="text-sm tracking-widest text-gray-500 uppercase">Certificat de réussite</p>
-        <p className="text-sm text-gray-600">Ce certificat est décerné à</p>
-        <h1 className="text-3xl font-semibold text-gray-900">{targetUser.nom}</h1>
-        <p className="text-sm text-gray-600">
-          pour avoir complété avec succès le cours
-        </p>
-        <h2 className="text-xl font-medium text-gray-900">{course.titre}</h2>
-        <p className="mt-4 text-sm text-gray-500">
-          Délivré le{" "}
-          {new Date(dateObtention).toLocaleDateString("fr-FR", { dateStyle: "long" })}
-        </p>
-        {tenant?.nom && <p className="text-sm text-gray-500">{tenant.nom}</p>}
-      </div>
+      <CertificateTemplate
+        tenant={{
+          nom: tenant?.nom ?? null,
+          logo_url: tenant?.logo_url ?? null,
+          couleur_primaire: tenant?.couleur_primaire ?? null,
+          adresse: tenant?.adresse ?? null,
+          numero_agrement: tenant?.numero_agrement ?? null,
+          representant_legal: tenant?.representant_legal ?? null,
+          certificat_modele: tenant?.certificat_modele ?? "classique",
+        }}
+        eleveNom={targetUser.nom}
+        courseTitre={course.titre}
+        dateObtention={dateObtention}
+      />
 
       <div className="mt-6 flex justify-center">
         <PrintButton />
