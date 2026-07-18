@@ -6,6 +6,23 @@ import { createClient } from "@/lib/supabase/server";
 import { parseCourseTemplate, insertCourseFromTemplate } from "@/lib/course-import";
 import { COURSE_TEMPLATES } from "@/lib/course-templates";
 
+export async function markNotificationRead(formData: FormData): Promise<void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const notificationId = String(formData.get("notification_id") ?? "");
+  const lien = String(formData.get("lien") ?? "/cours");
+
+  if (notificationId) {
+    await supabase.from("notifications").update({ lu: true }).eq("id", notificationId);
+  }
+
+  redirect(lien);
+}
+
 export type CreateCourseState = { error?: string };
 
 export async function createCourse(

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { sendEmail } from "@/lib/email";
 
 async function requireStaff() {
   const supabase = await createClient();
@@ -357,14 +358,48 @@ export async function createSeance(
 
   if (!courseId || !dateHeure) return { error: "La date/heure est requise." };
 
+  const isoDateHeure = new Date(dateHeure).toISOString();
   const { error } = await supabase.from("live_sessions").insert({
     course_id: courseId,
-    date_heure: new Date(dateHeure).toISOString(),
+    date_heure: isoDateHeure,
     lien_visio: lienVisio || null,
     professeur_id: callerProfile.role === "professeur" ? caller.id : null,
   });
 
   if (error) return { error: error.message };
+
+  const { data: course } = await supabase.from("courses").select("titre").eq("id", courseId).single();
+  const dateLabel = new Date(isoDateHeure).toLocaleString("fr-FR", { dateStyle: "medium", timeStyle: "short" });
+  const lien = `/cours/${courseId}`;
+
+  const { data: inscriptions } = await supabase
+    .from("enrollments")
+    .select("user_id, users(email)")
+    .eq("course_id", courseId);
+
+  const eleves = (inscriptions ?? []) as unknown as { user_id: string; users: { email: string | null } | null }[];
+
+  if (eleves.length > 0) {
+    await supabase.from("notifications").insert(
+      eleves.map((e) => ({
+        user_id: e.user_id,
+        type: "seance_programmee",
+        titre: "Nouvelle séance programmée",
+        message: `Une séance pour "${course?.titre ?? "votre cours"}" est programmée le ${dateLabel}.`,
+        lien,
+      })),
+    );
+
+    for (const eleve of eleves) {
+      if (eleve.users?.email) {
+        await sendEmail({
+          to: eleve.users.email,
+          subject: `Nouvelle séance programmée — ${course?.titre ?? ""}`,
+          html: `<p>Une séance pour <strong>${course?.titre ?? "votre cours"}</strong> est programmée le <strong>${dateLabel}</strong>.</p>`,
+        });
+      }
+    }
+  }
 
   revalidatePath(`/cours/${courseId}`);
   return {};

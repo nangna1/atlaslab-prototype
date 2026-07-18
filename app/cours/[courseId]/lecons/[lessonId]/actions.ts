@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { sendEmail } from "@/lib/email";
 
 async function requireStaff() {
   const supabase = await createClient();
@@ -108,12 +109,40 @@ export async function gradeSubmission(
   const noteNumber = Number(note);
   if (Number.isNaN(noteNumber)) return { error: "Note invalide." };
 
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from("submissions")
     .update({ note: noteNumber })
-    .eq("id", submissionId);
+    .eq("id", submissionId)
+    .select("user_id, assignments(titre)")
+    .single();
 
   if (error) return { error: error.message };
+
+  const assignmentTitre = (updated?.assignments as unknown as { titre: string } | null)?.titre ?? "un devoir";
+  const lien = `/cours/${courseId}/lecons/${lessonId}`;
+
+  if (updated?.user_id) {
+    await supabase.from("notifications").insert({
+      user_id: updated.user_id,
+      type: "devoir_note",
+      titre: "Devoir noté",
+      message: `Votre devoir "${assignmentTitre}" a été noté : ${noteNumber}/20.`,
+      lien,
+    });
+
+    const { data: eleve } = await supabase
+      .from("users")
+      .select("email")
+      .eq("id", updated.user_id)
+      .single();
+    if (eleve?.email) {
+      await sendEmail({
+        to: eleve.email,
+        subject: `Votre devoir "${assignmentTitre}" a été noté`,
+        html: `<p>Votre devoir <strong>${assignmentTitre}</strong> a été noté : <strong>${noteNumber}/20</strong>.</p>`,
+      });
+    }
+  }
 
   revalidatePath(`/cours/${courseId}/lecons/${lessonId}`);
   return {};
