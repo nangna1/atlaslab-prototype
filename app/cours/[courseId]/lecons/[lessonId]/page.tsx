@@ -5,6 +5,9 @@ import { createClient } from "@/lib/supabase/server";
 import LaboEEcircuit from "@/components/LaboEEcircuit";
 import LaboCircuitVerse from "@/components/LaboCircuitVerse";
 import QuizPlayer from "./QuizPlayer";
+import CreateAssignmentForm from "./CreateAssignmentForm";
+import SubmissionForm from "./SubmissionForm";
+import GradingList from "./GradingList";
 
 type QuizQuestion = { question: string; options: string[]; correct: number };
 
@@ -57,6 +60,59 @@ export default async function LessonPage({
       .maybeSingle();
     statut = progress?.statut ?? "non_commence";
     score = progress?.score ?? null;
+  }
+
+  const { data: assignment } = await supabase
+    .from("assignments")
+    .select("id, titre, date_limite")
+    .eq("lesson_id", lessonId)
+    .maybeSingle();
+
+  let mySubmission: { contenu: string | null; fichier_url: string | null; note: number | null } | null = null;
+  let submissions: {
+    id: string;
+    user_id: string;
+    nom: string;
+    contenu: string | null;
+    fichier_url: string | null;
+    note: number | null;
+    submitted_at: string;
+  }[] = [];
+
+  if (assignment) {
+    if (isApprenant) {
+      const { data } = await supabase
+        .from("submissions")
+        .select("contenu, fichier_url, note")
+        .eq("assignment_id", assignment.id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      mySubmission = data;
+    }
+    if (isStaff) {
+      const { data } = await supabase
+        .from("submissions")
+        .select("id, user_id, contenu, fichier_url, note, submitted_at, users(nom)")
+        .eq("assignment_id", assignment.id)
+        .order("submitted_at");
+      submissions = ((data ?? []) as unknown as {
+        id: string;
+        user_id: string;
+        contenu: string | null;
+        fichier_url: string | null;
+        note: number | null;
+        submitted_at: string;
+        users: { nom: string } | null;
+      }[]).map((s) => ({
+        id: s.id,
+        user_id: s.user_id,
+        nom: s.users?.nom ?? "—",
+        contenu: s.contenu,
+        fichier_url: s.fichier_url,
+        note: s.note,
+        submitted_at: s.submitted_at,
+      }));
+    }
   }
 
   async function markComplete() {
@@ -160,6 +216,43 @@ export default async function LessonPage({
           )}
         </div>
       )}
+
+      <section className="mt-10 border-t border-gray-200 pt-6">
+        <h2 className="mb-3 text-lg font-semibold text-gray-900">Devoir</h2>
+        {!assignment && isStaff && (
+          <CreateAssignmentForm courseId={course.id} lessonId={lesson.id} />
+        )}
+        {!assignment && isApprenant && (
+          <p className="text-sm text-gray-500">Aucun devoir pour cette leçon.</p>
+        )}
+        {assignment && (
+          <div className="flex flex-col gap-4">
+            <div>
+              <p className="font-medium text-gray-900">{assignment.titre}</p>
+              {assignment.date_limite && (
+                <p className="text-sm text-gray-500">
+                  À rendre avant le{" "}
+                  {new Date(assignment.date_limite).toLocaleString("fr-FR", {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })}
+                </p>
+              )}
+            </div>
+            {isApprenant && (
+              <SubmissionForm
+                courseId={course.id}
+                lessonId={lesson.id}
+                assignmentId={assignment.id}
+                submission={mySubmission}
+              />
+            )}
+            {isStaff && (
+              <GradingList courseId={course.id} lessonId={lesson.id} submissions={submissions} />
+            )}
+          </div>
+        )}
+      </section>
     </main>
   );
 }
