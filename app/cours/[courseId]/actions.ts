@@ -382,3 +382,34 @@ export async function deleteSeance(formData: FormData): Promise<void> {
 
   revalidatePath(`/cours/${courseId}`);
 }
+
+export type MarkAttendanceState = { error?: string; success?: boolean };
+
+export async function markAttendance(
+  _prevState: MarkAttendanceState,
+  formData: FormData,
+): Promise<MarkAttendanceState> {
+  const { supabase, error: authError } = await requireStaff();
+  if (authError) return { error: authError };
+
+  const seanceId = String(formData.get("seance_id") ?? "");
+  const courseId = String(formData.get("course_id") ?? "");
+  if (!seanceId || !courseId) return { error: "Séance invalide." };
+
+  const rows: { live_session_id: string; user_id: string; statut: string }[] = [];
+  for (const [key, value] of formData.entries()) {
+    if (!key.startsWith("statut_") || !value) continue;
+    const userId = key.slice("statut_".length);
+    if (!["present", "absent", "retard"].includes(String(value))) continue;
+    rows.push({ live_session_id: seanceId, user_id: userId, statut: String(value) });
+  }
+  if (rows.length === 0) return { error: "Aucun statut sélectionné." };
+
+  const { error } = await supabase
+    .from("attendance")
+    .upsert(rows, { onConflict: "live_session_id,user_id" });
+  if (error) return { error: error.message };
+
+  revalidatePath(`/cours/${courseId}`);
+  return { success: true };
+}

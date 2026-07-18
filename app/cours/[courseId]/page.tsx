@@ -131,6 +131,26 @@ export default async function CoursDetailPage({
     .eq("course_id", courseId)
     .order("date_heure");
 
+  const seanceIds = (seances ?? []).map((s) => s.id);
+  const { data: attendanceRows } =
+    seanceIds.length > 0
+      ? await supabase
+          .from("attendance")
+          .select("live_session_id, user_id, statut")
+          .in("live_session_id", seanceIds)
+      : { data: [] };
+
+  const monStatutParSeance = new Map<string, string>();
+  const attendanceParSeance = new Map<string, Record<string, string>>();
+  for (const row of attendanceRows ?? []) {
+    if (row.user_id === user.id) monStatutParSeance.set(row.live_session_id, row.statut);
+    if (isStaff) {
+      const map = attendanceParSeance.get(row.live_session_id) ?? {};
+      map[row.user_id] = row.statut;
+      attendanceParSeance.set(row.live_session_id, map);
+    }
+  }
+
   return (
     <main
       className="page"
@@ -197,7 +217,15 @@ export default async function CoursDetailPage({
         ) : (
           <div className="flex flex-col gap-2">
             {(seances ?? []).map((seance) => (
-              <SeanceItem key={seance.id} courseId={course.id} seance={seance} isStaff={isStaff} />
+              <SeanceItem
+                key={seance.id}
+                courseId={course.id}
+                seance={seance}
+                isStaff={isStaff}
+                monStatut={monStatutParSeance.get(seance.id)}
+                eleves={isStaff ? eleves.map((e) => ({ user_id: e.user_id, nom: e.nom })) : undefined}
+                attendanceParEleve={isStaff ? attendanceParSeance.get(seance.id) ?? {} : undefined}
+              />
             ))}
           </div>
         )}
