@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { hasSufficientContrast } from "@/lib/color-contrast";
+import { logAudit } from "@/lib/audit";
 
 export type UpdateBrandingState = { error?: string; success?: boolean };
 
@@ -72,6 +73,15 @@ export async function updateBranding(
 
   const { error } = await supabase.from("tenants").update(updates).eq("id", tenantId);
   if (error) return { error: error.message };
+
+  await logAudit(supabase, {
+    acteurId: caller.id,
+    tenantId,
+    action: "etablissement_personnalise",
+    cibleType: "tenant",
+    cibleId: tenantId,
+    details: { champs: Object.keys(updates) },
+  });
 
   revalidatePath("/admin/etablissement");
   revalidatePath("/cours");

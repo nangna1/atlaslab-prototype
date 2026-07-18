@@ -3,25 +3,26 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { sendEmail } from "@/lib/email";
+import { logAudit } from "@/lib/audit";
 
 async function requireStaff() {
   const supabase = await createClient();
   const {
     data: { user: caller },
   } = await supabase.auth.getUser();
-  if (!caller) return { supabase, error: "Non authentifié." } as const;
+  if (!caller) return { supabase, caller: null, tenantId: null, error: "Non authentifié." } as const;
 
   const { data: callerProfile } = await supabase
     .from("users")
-    .select("role")
+    .select("role, tenant_id")
     .eq("id", caller.id)
     .single();
 
   if (!callerProfile || !["professeur", "admin_tenant", "super_admin"].includes(callerProfile.role)) {
-    return { supabase, error: "Action réservée au staff." } as const;
+    return { supabase, caller, tenantId: null, error: "Action réservée au staff." } as const;
   }
 
-  return { supabase, error: null } as const;
+  return { supabase, caller, tenantId: callerProfile.tenant_id as string | null, error: null } as const;
 }
 
 export type CreateAssignmentState = { error?: string };
@@ -97,7 +98,7 @@ export async function gradeSubmission(
   _prevState: GradeSubmissionState,
   formData: FormData,
 ): Promise<GradeSubmissionState> {
-  const { supabase, error: authError } = await requireStaff();
+  const { supabase, caller, tenantId, error: authError } = await requireStaff();
   if (authError) return { error: authError };
 
   const courseId = String(formData.get("course_id") ?? "");
@@ -120,6 +121,15 @@ export async function gradeSubmission(
 
   const assignmentTitre = (updated?.assignments as unknown as { titre: string } | null)?.titre ?? "un devoir";
   const lien = `/cours/${courseId}/lecons/${lessonId}`;
+
+  await logAudit(supabase, {
+    acteurId: caller!.id,
+    tenantId,
+    action: "devoir_note",
+    cibleType: "submission",
+    cibleId: submissionId,
+    details: { note: noteNumber, devoir: assignmentTitre, eleve_id: updated?.user_id ?? null },
+  });
 
   if (updated?.user_id) {
     await supabase.from("notifications").insert({

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { parseAccountsCsv } from "@/lib/csv";
+import { logAudit } from "@/lib/audit";
 
 export type ActionState = { error?: string; success?: boolean };
 
@@ -59,6 +60,15 @@ export async function createAccount(
   if (insertError) {
     return { error: insertError.message };
   }
+
+  await logAudit(supabase, {
+    acteurId: caller.id,
+    tenantId: callerProfile.tenant_id,
+    action: "compte_cree",
+    cibleType: "compte",
+    cibleId: created.user.id,
+    details: { nom, email, role },
+  });
 
   revalidatePath("/admin");
   return { success: true };
@@ -155,6 +165,17 @@ export async function importAccounts(
     results.push({ nom: row.nom, email: row.email, role: row.role, password });
   }
 
+  const created = results.filter((r) => !r.error);
+  if (created.length > 0) {
+    await logAudit(supabase, {
+      acteurId: caller.id,
+      tenantId: callerProfile.tenant_id,
+      action: "comptes_importes",
+      cibleType: "compte",
+      details: { count: created.length, emails: created.map((r) => r.email) },
+    });
+  }
+
   revalidatePath("/admin");
 
   const skipped = parseErrors.length > 0 ? `${parseErrors.length} ligne(s) ignorée(s) — voir le format attendu.` : undefined;
@@ -167,19 +188,19 @@ async function requireAdmin() {
   const {
     data: { user: caller },
   } = await supabase.auth.getUser();
-  if (!caller) return { supabase, caller: null, error: "Non authentifié." } as const;
+  if (!caller) return { supabase, caller: null, tenantId: null, error: "Non authentifié." } as const;
 
   const { data: callerProfile } = await supabase
     .from("users")
-    .select("role")
+    .select("role, tenant_id")
     .eq("id", caller.id)
     .single();
 
   if (!callerProfile || !["admin_tenant", "super_admin"].includes(callerProfile.role)) {
-    return { supabase, caller, error: "Action réservée aux administrateurs." } as const;
+    return { supabase, caller, tenantId: null, error: "Action réservée aux administrateurs." } as const;
   }
 
-  return { supabase, caller, error: null } as const;
+  return { supabase, caller, tenantId: callerProfile.tenant_id as string | null, error: null } as const;
 }
 
 export type UpdateNomState = { error?: string; success?: boolean };
@@ -188,7 +209,7 @@ export async function updateAccountNom(
   _prevState: UpdateNomState,
   formData: FormData,
 ): Promise<UpdateNomState> {
-  const { supabase, error: authError } = await requireAdmin();
+  const { supabase, caller, tenantId, error: authError } = await requireAdmin();
   if (authError) return { error: authError };
 
   const targetId = String(formData.get("target_id") ?? "");
@@ -197,6 +218,15 @@ export async function updateAccountNom(
 
   const { error } = await supabase.from("users").update({ nom }).eq("id", targetId);
   if (error) return { error: error.message };
+
+  await logAudit(supabase, {
+    acteurId: caller!.id,
+    tenantId,
+    action: "compte_renomme",
+    cibleType: "compte",
+    cibleId: targetId,
+    details: { nom },
+  });
 
   revalidatePath("/admin");
   return { success: true };
@@ -208,7 +238,7 @@ export async function toggleAccountActive(
   _prevState: ToggleActiveState,
   formData: FormData,
 ): Promise<ToggleActiveState> {
-  const { supabase, caller, error: authError } = await requireAdmin();
+  const { supabase, caller, tenantId, error: authError } = await requireAdmin();
   if (authError) return { error: authError };
 
   const targetId = String(formData.get("target_id") ?? "");
@@ -230,6 +260,14 @@ export async function toggleAccountActive(
     .update({ actif: !currentlyActif })
     .eq("id", targetId);
   if (error) return { error: error.message };
+
+  await logAudit(supabase, {
+    acteurId: caller!.id,
+    tenantId,
+    action: currentlyActif ? "compte_desactive" : "compte_reactive",
+    cibleType: "compte",
+    cibleId: targetId,
+  });
 
   revalidatePath("/admin");
   return {};
