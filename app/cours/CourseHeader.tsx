@@ -25,31 +25,33 @@ export default function CourseHeader({
 
   if (!isEditing) {
     return (
-      <div>
-        <h1 style={{ display: "inline" }}>{titre}</h1>{" "}
-        <button type="button" onClick={() => setIsEditing(true)} style={{ fontSize: 14 }}>
-          Modifier
-        </button>
-        <p style={{ color: "#666" }}>{filiere}</p>
+      <div className="mb-6">
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-semibold text-gray-900">{titre}</h1>
+          <button type="button" onClick={() => setIsEditing(true)} className="btn-link">
+            Modifier
+          </button>
+        </div>
+        <p className="mt-1 text-sm text-gray-500">{filiere}</p>
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: 400, marginBottom: 12 }}>
-      <form action={formAction} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+    <div className="mb-6 max-w-sm">
+      <form action={formAction} className="flex flex-col gap-2">
         <input type="hidden" name="course_id" value={courseId} />
-        <input name="titre" type="text" defaultValue={titre} required style={{ padding: 8 }} />
-        <input name="filiere" type="text" defaultValue={filiere ?? ""} style={{ padding: 8 }} />
-        <div style={{ display: "flex", gap: 8 }}>
-          <button type="submit" disabled={pending} style={{ padding: 8 }}>
+        <input name="titre" type="text" defaultValue={titre} required className="input" />
+        <input name="filiere" type="text" defaultValue={filiere ?? ""} className="input" />
+        <div className="flex gap-2">
+          <button type="submit" disabled={pending} className="btn-primary">
             {pending ? "Enregistrement..." : "Enregistrer"}
           </button>
-          <button type="button" onClick={() => setIsEditing(false)} style={{ padding: 8 }}>
+          <button type="button" onClick={() => setIsEditing(false)} className="btn-secondary">
             Annuler
           </button>
         </div>
-        {state.error && <span style={{ color: "#c00" }}>{state.error}</span>}
+        {state.error && <span className="text-sm text-red-600">{state.error}</span>}
       </form>
       <form
         action={(formData) => {
@@ -57,10 +59,10 @@ export default function CourseHeader({
             deleteCourse(formData);
           }
         }}
-        style={{ marginTop: 8 }}
+        className="mt-2"
       >
         <input type="hidden" name="course_id" value={courseId} />
-        <button type="submit" style={{ padding: 8, color: "#c00" }}>
+        <button type="submit" className="btn-danger btn-sm">
           Supprimer le cours
         </button>
       </form>

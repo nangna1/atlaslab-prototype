@@ -33,48 +33,29 @@ export default function AccountRow({ compte, isSelf }: { compte: Compte; isSelf:
 
   if (isEditing) {
     return (
-      <form
-        action={nomAction}
-        style={{
-          display: "flex",
-          gap: 8,
-          alignItems: "center",
-          padding: 12,
-          border: "1px solid #eee",
-          borderRadius: 6,
-        }}
-      >
+      <form action={nomAction} className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-3">
         <input type="hidden" name="target_id" value={compte.id} />
-        <input name="nom" type="text" defaultValue={compte.nom} required style={{ padding: 6, flex: 1 }} />
-        <button type="submit" disabled={nomPending} style={{ padding: 6 }}>
+        <input name="nom" type="text" defaultValue={compte.nom} required className="input flex-1" />
+        <button type="submit" disabled={nomPending} className="btn-primary btn-sm">
           {nomPending ? "Enregistrement..." : "Enregistrer"}
         </button>
-        <button type="button" onClick={() => setIsEditing(false)} style={{ padding: 6 }}>
+        <button type="button" onClick={() => setIsEditing(false)} className="btn-secondary btn-sm">
           Annuler
         </button>
-        {nomState.error && <span style={{ color: "#c00" }}>{nomState.error}</span>}
+        {nomState.error && <span className="text-sm text-red-600">{nomState.error}</span>}
       </form>
     );
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: 12,
-        border: "1px solid #eee",
-        borderRadius: 6,
-      }}
-    >
-      <span>{compte.nom}</span>
-      <span style={{ color: "#666" }}>{compte.email ?? "—"}</span>
-      <span style={{ color: "#666" }}>{ROLE_LABEL[compte.role] ?? compte.role}</span>
-      <span style={{ color: compte.actif ? "#080" : "#c00" }}>
+    <div className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white p-3">
+      <span className="text-gray-900">{compte.nom}</span>
+      <span className="text-sm text-gray-500">{compte.email ?? "—"}</span>
+      <span className="text-sm text-gray-500">{ROLE_LABEL[compte.role] ?? compte.role}</span>
+      <span className={compte.actif ? "badge-success" : "badge-error"}>
         {compte.actif ? "Actif" : "Désactivé"}
       </span>
-      <button type="button" onClick={() => setIsEditing(true)} style={{ fontSize: 13 }}>
+      <button type="button" onClick={() => setIsEditing(true)} className="btn-link shrink-0">
         Modifier
       </button>
       {!isSelf && (
@@ -84,15 +65,19 @@ export default function AccountRow({ compte, isSelf }: { compte: Compte; isSelf:
               toggleAction(formData);
             }
           }}
+          className="shrink-0"
         >
           <input type="hidden" name="target_id" value={compte.id} />
           <input type="hidden" name="actif" value={String(compte.actif)} />
-          <button type="submit" style={{ fontSize: 13, color: compte.actif ? "#c00" : undefined }}>
+          <button
+            type="submit"
+            className={`text-sm font-medium hover:underline ${compte.actif ? "text-red-600" : "text-indigo-600"}`}
+          >
             {compte.actif ? "Désactiver" : "Réactiver"}
           </button>
         </form>
       )}
-      {toggleState.error && <span style={{ color: "#c00" }}>{toggleState.error}</span>}
+      {toggleState.error && <span className="text-sm text-red-600">{toggleState.error}</span>}
     </div>
   );
 }

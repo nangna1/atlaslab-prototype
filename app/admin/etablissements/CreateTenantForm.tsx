@@ -9,56 +9,30 @@ export default function CreateTenantForm() {
   const [state, formAction, pending] = useActionState(createTenant, initialState);
 
   return (
-    <form action={formAction} style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 400 }}>
+    <form action={formAction} className="card flex max-w-sm flex-col gap-4">
       <label>
-        Nom de l&apos;établissement
-        <input
-          name="nom"
-          type="text"
-          required
-          style={{ display: "block", width: "100%", padding: 8, marginTop: 4 }}
-        />
+        <span className="label">Nom de l&apos;établissement</span>
+        <input name="nom" type="text" required className="input" />
       </label>
       <label>
-        Slug
-        <input
-          name="slug"
-          type="text"
-          required
-          style={{ display: "block", width: "100%", padding: 8, marginTop: 4 }}
-        />
+        <span className="label">Slug</span>
+        <input name="slug" type="text" required className="input" />
       </label>
       <label>
-        Nom du premier admin
-        <input
-          name="admin_nom"
-          type="text"
-          required
-          style={{ display: "block", width: "100%", padding: 8, marginTop: 4 }}
-        />
+        <span className="label">Nom du premier admin</span>
+        <input name="admin_nom" type="text" required className="input" />
       </label>
       <label>
-        Email du premier admin
-        <input
-          name="admin_email"
-          type="email"
-          required
-          style={{ display: "block", width: "100%", padding: 8, marginTop: 4 }}
-        />
+        <span className="label">Email du premier admin</span>
+        <input name="admin_email" type="email" required className="input" />
       </label>
       <label>
-        Mot de passe
-        <input
-          name="admin_password"
-          type="password"
-          required
-          minLength={6}
-          style={{ display: "block", width: "100%", padding: 8, marginTop: 4 }}
-        />
+        <span className="label">Mot de passe</span>
+        <input name="admin_password" type="password" required minLength={6} className="input" />
       </label>
-      {state.error && <p style={{ color: "#c00" }}>{state.error}</p>}
-      {state.success && <p style={{ color: "#080" }}>Établissement créé.</p>}
-      <button type="submit" disabled={pending} style={{ padding: 10 }}>
+      {state.error && <p className="text-sm text-red-600">{state.error}</p>}
+      {state.success && <p className="text-sm text-green-700">Établissement créé.</p>}
+      <button type="submit" disabled={pending} className="btn-primary">
         {pending ? "Création..." : "Créer l'établissement"}
       </button>
     </form>

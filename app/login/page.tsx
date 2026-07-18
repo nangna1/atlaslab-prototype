@@ -30,34 +30,37 @@ export default function LoginPage() {
   }
 
   return (
-    <main style={{ padding: 32, maxWidth: 360, margin: "80px auto" }}>
-      <h1 style={{ marginBottom: 24 }}>Connexion — AtlasLab</h1>
-      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        <label>
-          Email
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={{ display: "block", width: "100%", padding: 8, marginTop: 4 }}
-          />
-        </label>
-        <label>
-          Mot de passe
-          <input
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={{ display: "block", width: "100%", padding: 8, marginTop: 4 }}
-          />
-        </label>
-        {error && <p style={{ color: "#c00" }}>{error}</p>}
-        <button type="submit" disabled={loading} style={{ padding: 10 }}>
-          {loading ? "Connexion..." : "Se connecter"}
-        </button>
-      </form>
+    <main className="flex min-h-screen items-center justify-center bg-gray-50 px-6">
+      <div className="w-full max-w-sm">
+        <h1 className="mb-1 text-center text-2xl font-semibold text-indigo-600">AtlasLab</h1>
+        <p className="mb-6 text-center text-sm text-gray-500">Connexion à votre espace</p>
+        <form onSubmit={handleSubmit} className="card flex flex-col gap-4">
+          <label>
+            <span className="label">Email</span>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="input"
+            />
+          </label>
+          <label>
+            <span className="label">Mot de passe</span>
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="input"
+            />
+          </label>
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <button type="submit" disabled={loading} className="btn-primary w-full">
+            {loading ? "Connexion..." : "Se connecter"}
+          </button>
+        </form>
+      </div>
     </main>
   );
 }

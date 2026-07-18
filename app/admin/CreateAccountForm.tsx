@@ -9,49 +9,29 @@ export default function CreateAccountForm() {
   const [state, formAction, pending] = useActionState(createAccount, initialState);
 
   return (
-    <form action={formAction} style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 400 }}>
+    <form action={formAction} className="card flex max-w-sm flex-col gap-4">
       <label>
-        Nom
-        <input
-          name="nom"
-          type="text"
-          required
-          style={{ display: "block", width: "100%", padding: 8, marginTop: 4 }}
-        />
+        <span className="label">Nom</span>
+        <input name="nom" type="text" required className="input" />
       </label>
       <label>
-        Email
-        <input
-          name="email"
-          type="email"
-          required
-          style={{ display: "block", width: "100%", padding: 8, marginTop: 4 }}
-        />
+        <span className="label">Email</span>
+        <input name="email" type="email" required className="input" />
       </label>
       <label>
-        Mot de passe
-        <input
-          name="password"
-          type="password"
-          required
-          minLength={6}
-          style={{ display: "block", width: "100%", padding: 8, marginTop: 4 }}
-        />
+        <span className="label">Mot de passe</span>
+        <input name="password" type="password" required minLength={6} className="input" />
       </label>
       <label>
-        Rôle
-        <select
-          name="role"
-          defaultValue="apprenant"
-          style={{ display: "block", width: "100%", padding: 8, marginTop: 4 }}
-        >
+        <span className="label">Rôle</span>
+        <select name="role" defaultValue="apprenant" className="input">
           <option value="professeur">Professeur</option>
           <option value="apprenant">Apprenant</option>
         </select>
       </label>
-      {state.error && <p style={{ color: "#c00" }}>{state.error}</p>}
-      {state.success && <p style={{ color: "#080" }}>Compte créé.</p>}
-      <button type="submit" disabled={pending} style={{ padding: 10 }}>
+      {state.error && <p className="text-sm text-red-600">{state.error}</p>}
+      {state.success && <p className="text-sm text-green-700">Compte créé.</p>}
+      <button type="submit" disabled={pending} className="btn-primary">
         {pending ? "Création..." : "Créer le compte"}
       </button>
     </form>

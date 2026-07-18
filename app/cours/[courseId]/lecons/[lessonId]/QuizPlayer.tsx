@@ -12,23 +12,22 @@ export default function QuizPlayer({
   resultScore: number | null;
 }) {
   return (
-    <form action={action} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <form action={action} className="flex flex-col gap-4">
       {questions.map((q, i) => (
-        <fieldset key={i} style={{ border: "1px solid #eee", borderRadius: 6, padding: 12 }}>
-          <legend>{q.question}</legend>
+        <fieldset key={i} className="card">
+          <legend className="px-1 font-medium text-gray-900">{q.question}</legend>
           {q.options.map((opt, j) => (
-            <label key={j} style={{ display: "block", padding: 4 }}>
-              <input type="radio" name={`answer-${i}`} value={j} required={j === 0} /> {opt}
+            <label key={j} className="block p-1 text-sm text-gray-700">
+              <input type="radio" name={`answer-${i}`} value={j} required={j === 0} className="mr-2" />
+              {opt}
             </label>
           ))}
         </fieldset>
       ))}
-      <button type="submit" style={{ padding: 10 }}>
+      <button type="submit" className="btn-primary self-start">
         Valider le quiz
       </button>
-      {resultScore !== null && (
-        <p style={{ color: "#080" }}>Score : {resultScore}%</p>
-      )}
+      {resultScore !== null && <p className="font-medium text-green-700">Score : {resultScore}%</p>}
     </form>
   );
 }

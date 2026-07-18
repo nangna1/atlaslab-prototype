@@ -38,23 +38,12 @@ export default function LessonRow({ courseId, lesson }: { courseId: string; less
 
   if (!isEditing) {
     return (
-      <li style={{ marginBottom: 8 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Link
-            href={`/cours/${courseId}/lecons/${lesson.id}`}
-            style={{
-              display: "block",
-              flex: 1,
-              padding: 12,
-              border: "1px solid #eee",
-              borderRadius: 6,
-              textDecoration: "none",
-              color: "inherit",
-            }}
-          >
+      <li>
+        <div className="flex items-center gap-2">
+          <Link href={`/cours/${courseId}/lecons/${lesson.id}`} className="card-link flex-1">
             {TYPE_LABEL[lesson.type]} — {lesson.titre}
           </Link>
-          <button type="button" onClick={() => setIsEditing(true)} style={{ fontSize: 13 }}>
+          <button type="button" onClick={() => setIsEditing(true)} className="btn-link shrink-0">
             Modifier
           </button>
           <form
@@ -63,10 +52,11 @@ export default function LessonRow({ courseId, lesson }: { courseId: string; less
                 deleteLesson(formData);
               }
             }}
+            className="shrink-0"
           >
             <input type="hidden" name="course_id" value={courseId} />
             <input type="hidden" name="lesson_id" value={lesson.id} />
-            <button type="submit" style={{ fontSize: 13, color: "#c00" }}>
+            <button type="submit" className="text-sm font-medium text-red-600 hover:underline">
               Supprimer
             </button>
           </form>
@@ -76,22 +66,17 @@ export default function LessonRow({ courseId, lesson }: { courseId: string; less
   }
 
   return (
-    <li style={{ marginBottom: 8 }}>
-      <form
-        action={formAction}
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 8,
-          padding: 12,
-          border: "1px dashed #ccc",
-          borderRadius: 6,
-        }}
-      >
+    <li>
+      <form action={formAction} className="card-dashed flex flex-col gap-2">
         <input type="hidden" name="course_id" value={courseId} />
         <input type="hidden" name="lesson_id" value={lesson.id} />
-        <input name="titre" type="text" defaultValue={lesson.titre} required style={{ padding: 8 }} />
-        <select name="type" value={type} onChange={(e) => setType(e.target.value)} style={{ padding: 8 }}>
+        <input name="titre" type="text" defaultValue={lesson.titre} required className="input" />
+        <select
+          name="type"
+          value={type}
+          onChange={(e) => setType(e.target.value)}
+          className="input"
+        >
           <option value="contenu">Contenu</option>
           <option value="labo">Laboratoire</option>
           <option value="quiz">Quiz</option>
@@ -102,7 +87,7 @@ export default function LessonRow({ courseId, lesson }: { courseId: string; less
           defaultValue={lesson.contenu_markdown ?? ""}
           placeholder="Contenu (markdown, optionnel)"
           rows={3}
-          style={{ padding: 8 }}
+          className="input"
         />
         {type === "labo" && (
           <>
@@ -110,7 +95,7 @@ export default function LessonRow({ courseId, lesson }: { courseId: string; less
               name="labo_type"
               value={laboType}
               onChange={(e) => setLaboType(e.target.value)}
-              style={{ padding: 8 }}
+              className="input"
             >
               <option value="eecircuit">Électronique (EEcircuit)</option>
               <option value="circuitverse">Logique numérique (CircuitVerse)</option>
@@ -121,7 +106,7 @@ export default function LessonRow({ courseId, lesson }: { courseId: string; less
                 defaultValue={lesson.labo_config?.netlist ?? ""}
                 placeholder="Netlist SPICE"
                 rows={4}
-                style={{ padding: 8 }}
+                className="input font-mono"
               />
             ) : (
               <input
@@ -129,21 +114,21 @@ export default function LessonRow({ courseId, lesson }: { courseId: string; less
                 type="text"
                 defaultValue={lesson.labo_config?.embed_url ?? ""}
                 placeholder="URL d'embed CircuitVerse"
-                style={{ padding: 8 }}
+                className="input"
               />
             )}
           </>
         )}
         {type === "quiz" && <QuizQuestionsEditor initialQuestions={lesson.quiz_questions ?? []} />}
-        <div style={{ display: "flex", gap: 8 }}>
-          <button type="submit" disabled={pending} style={{ padding: 8 }}>
+        <div className="flex gap-2">
+          <button type="submit" disabled={pending} className="btn-primary">
             {pending ? "Enregistrement..." : "Enregistrer"}
           </button>
-          <button type="button" onClick={() => setIsEditing(false)} style={{ padding: 8 }}>
+          <button type="button" onClick={() => setIsEditing(false)} className="btn-secondary">
             Annuler
           </button>
         </div>
-        {state.error && <span style={{ color: "#c00" }}>{state.error}</span>}
+        {state.error && <span className="text-sm text-red-600">{state.error}</span>}
       </form>
     </li>
   );

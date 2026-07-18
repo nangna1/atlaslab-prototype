@@ -34,19 +34,19 @@ export default function QuizQuestionsEditor({
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <div className="flex flex-col gap-3">
       <input type="hidden" name="quiz_questions" value={JSON.stringify(questions)} />
       {questions.map((q, i) => (
-        <div key={i} style={{ border: "1px solid #eee", borderRadius: 6, padding: 12 }}>
+        <div key={i} className="rounded-lg border border-gray-200 bg-white p-3">
           <input
             type="text"
             placeholder="Question"
             value={q.question}
             onChange={(e) => updateQuestion(i, { question: e.target.value })}
-            style={{ padding: 8, width: "100%", marginBottom: 8 }}
+            className="input mb-2"
           />
           {q.options.map((opt, j) => (
-            <div key={j} style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 4 }}>
+            <div key={j} className="mb-1 flex items-center gap-2">
               <input
                 type="radio"
                 checked={q.correct === j}
@@ -57,16 +57,20 @@ export default function QuizQuestionsEditor({
                 placeholder={`Option ${j + 1}`}
                 value={opt}
                 onChange={(e) => updateOption(i, j, e.target.value)}
-                style={{ padding: 8, flex: 1 }}
+                className="input flex-1"
               />
             </div>
           ))}
-          <button type="button" onClick={() => removeQuestion(i)} style={{ fontSize: 13, color: "#c00" }}>
+          <button
+            type="button"
+            onClick={() => removeQuestion(i)}
+            className="mt-1 text-sm font-medium text-red-600 hover:underline"
+          >
             Supprimer la question
           </button>
         </div>
       ))}
-      <button type="button" onClick={addQuestion} style={{ padding: 8, alignSelf: "flex-start" }}>
+      <button type="button" onClick={addQuestion} className="btn-secondary self-start">
         + Ajouter une question
       </button>
     </div>

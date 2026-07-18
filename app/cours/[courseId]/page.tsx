@@ -128,50 +128,42 @@ export default async function CoursDetailPage({
     .order("date_heure");
 
   return (
-    <main style={{ padding: 32, maxWidth: 800, margin: "0 auto" }}>
-      <Link href="/cours" style={{ color: "#666" }}>
+    <main className="page">
+      <Link href="/cours" className="text-sm text-gray-500 hover:text-gray-700">
         ← Retour aux cours
       </Link>
-      {isStaff ? (
-        <CourseHeader courseId={course.id} titre={course.titre} filiere={course.filiere} />
-      ) : (
-        <>
-          <h1>{course.titre}</h1>
-          <p style={{ color: "#666" }}>{course.filiere}</p>
-        </>
-      )}
+      <div className="mt-2">
+        {isStaff ? (
+          <CourseHeader courseId={course.id} titre={course.titre} filiere={course.filiere} />
+        ) : (
+          <>
+            <h1 className="text-2xl font-semibold text-gray-900">{course.titre}</h1>
+            <p className="mt-1 mb-6 text-sm text-gray-500">{course.filiere}</p>
+          </>
+        )}
+      </div>
       {isApprenant && (
-        <p style={{ color: "#666" }}>
+        <p className="mb-6 text-sm font-medium text-gray-500">
           {termineeIds.size}/{totalLessons} leçon(s) terminée(s)
         </p>
       )}
 
       {modules.map((module) => (
-        <section key={module.id} style={{ marginTop: 24 }}>
+        <section key={module.id} className="mt-8">
           {isStaff ? (
             <ModuleHeader courseId={course.id} moduleId={module.id} titre={module.titre} />
           ) : (
-            <h2 style={{ fontSize: 18, borderBottom: "1px solid #ddd", paddingBottom: 8 }}>
+            <h2 className="mb-3 border-b border-gray-200 pb-2 text-lg font-semibold text-gray-900">
               {module.titre}
             </h2>
           )}
-          <ul style={{ listStyle: "none", padding: 0 }}>
+          <ul className="flex list-none flex-col gap-2 p-0">
             {module.lessons.map((lesson) =>
               isStaff ? (
                 <LessonRow key={lesson.id} courseId={course.id} lesson={lesson} />
               ) : (
-                <li key={lesson.id} style={{ marginBottom: 8 }}>
-                  <Link
-                    href={`/cours/${course.id}/lecons/${lesson.id}`}
-                    style={{
-                      display: "block",
-                      padding: 12,
-                      border: "1px solid #eee",
-                      borderRadius: 6,
-                      textDecoration: "none",
-                      color: "inherit",
-                    }}
-                  >
+                <li key={lesson.id}>
+                  <Link href={`/cours/${course.id}/lecons/${lesson.id}`} className="card-link">
                     {isApprenant && (termineeIds.has(lesson.id) ? "✓ " : "")}
                     {TYPE_LABEL[lesson.type]} — {lesson.titre}
                   </Link>
@@ -183,54 +175,58 @@ export default async function CoursDetailPage({
         </section>
       ))}
 
-      {isStaff && <AddModuleForm courseId={course.id} />}
+      {isStaff && (
+        <div className="mt-6">
+          <AddModuleForm courseId={course.id} />
+        </div>
+      )}
 
-      <section style={{ marginTop: 32 }}>
-        <h2 style={{ fontSize: 18, borderBottom: "1px solid #ddd", paddingBottom: 8 }}>
+      <section className="mt-10">
+        <h2 className="mb-3 border-b border-gray-200 pb-2 text-lg font-semibold text-gray-900">
           Séances en direct
         </h2>
         {(seances ?? []).length === 0 ? (
-          <p style={{ color: "#666" }}>Aucune séance programmée.</p>
+          <p className="text-sm text-gray-500">Aucune séance programmée.</p>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
+          <div className="flex flex-col gap-2">
             {(seances ?? []).map((seance) => (
               <SeanceItem key={seance.id} courseId={course.id} seance={seance} isStaff={isStaff} />
             ))}
           </div>
         )}
-        {isStaff && <SeanceForm courseId={course.id} />}
+        {isStaff && (
+          <div className="mt-3">
+            <SeanceForm courseId={course.id} />
+          </div>
+        )}
       </section>
 
       {isStaff && (
-        <section style={{ marginTop: 32 }}>
-          <h2 style={{ fontSize: 18, borderBottom: "1px solid #ddd", paddingBottom: 8 }}>
+        <section className="mt-10">
+          <h2 className="mb-3 border-b border-gray-200 pb-2 text-lg font-semibold text-gray-900">
             Élèves inscrits
           </h2>
           {eleves.length === 0 ? (
-            <p style={{ color: "#666" }}>Aucun élève inscrit.</p>
+            <p className="text-sm text-gray-500">Aucun élève inscrit.</p>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
+            <div className="flex flex-col gap-2">
               {eleves.map((eleve) => (
                 <div
                   key={eleve.user_id}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    padding: 12,
-                    border: "1px solid #eee",
-                    borderRadius: 6,
-                  }}
+                  className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3"
                 >
-                  <span>{eleve.nom}</span>
-                  <span style={{ color: "#666" }}>{eleve.email ?? "—"}</span>
-                  <span style={{ color: "#666" }}>
+                  <span className="text-gray-900">{eleve.nom}</span>
+                  <span className="text-sm text-gray-500">{eleve.email ?? "—"}</span>
+                  <span className="text-sm text-gray-500">
                     {eleve.termine}/{totalLessons} terminé(s)
                   </span>
                 </div>
               ))}
             </div>
           )}
-          <EnrollForm courseId={course.id} candidats={candidats} />
+          <div className="mt-3">
+            <EnrollForm courseId={course.id} candidats={candidats} />
+          </div>
         </section>
       )}
     </main>

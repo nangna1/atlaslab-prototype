@@ -26,34 +26,28 @@ export default async function EtablissementsPage() {
     .order("created_at");
 
   return (
-    <main style={{ padding: 32, maxWidth: 800, margin: "0 auto" }}>
-      <Link href="/admin" style={{ color: "#666" }}>
+    <main className="page">
+      <Link href="/admin" className="text-sm text-gray-500 hover:text-gray-700">
         ← Retour aux comptes
       </Link>
-      <h1 style={{ marginBottom: 24 }}>Établissements</h1>
+      <h1 className="mt-2 mb-6 text-2xl font-semibold text-gray-900">Établissements</h1>
 
-      <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 18, marginBottom: 12 }}>Créer un établissement</h2>
+      <section className="mb-10">
+        <h2 className="mb-3 text-lg font-semibold text-gray-900">Créer un établissement</h2>
         <CreateTenantForm />
       </section>
 
       <section>
-        <h2 style={{ fontSize: 18, marginBottom: 12 }}>Établissements existants</h2>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <h2 className="mb-3 text-lg font-semibold text-gray-900">Établissements existants</h2>
+        <div className="flex flex-col gap-2">
           {(tenants ?? []).map((tenant) => (
             <div
               key={tenant.id}
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                padding: 12,
-                border: "1px solid #eee",
-                borderRadius: 6,
-              }}
+              className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3"
             >
-              <span>{tenant.nom}</span>
-              <span style={{ color: "#666" }}>{tenant.slug}</span>
-              <span style={{ color: "#666" }}>{tenant.plan}</span>
+              <span className="text-gray-900">{tenant.nom}</span>
+              <span className="text-sm text-gray-500">{tenant.slug}</span>
+              <span className="badge-muted">{tenant.plan}</span>
             </div>
           ))}
         </div>

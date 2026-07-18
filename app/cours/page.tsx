@@ -35,43 +35,38 @@ export default async function CoursListPage() {
   const tenantNom = (courses?.[0] as { tenants?: { nom?: string } } | undefined)?.tenants?.nom ?? "";
 
   return (
-    <main style={{ padding: 32, maxWidth: 800, margin: "0 auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-        <p style={{ color: "#666", marginBottom: 4 }}>{tenantNom}</p>
+    <main className="page">
+      <div className="mb-6 flex items-baseline justify-between">
+        <p className="text-sm font-medium text-gray-500">{tenantNom}</p>
         <form action={signOut}>
-          <button type="submit" style={{ fontSize: 14, color: "#666" }}>
+          <button type="submit" className="btn-link text-gray-500 hover:text-gray-700">
             Se déconnecter
           </button>
         </form>
       </div>
-      <h1 style={{ marginBottom: 24 }}>{isApprenant ? "Cours auxquels je suis inscrit" : "Mes cours"}</h1>
+      <h1 className="mb-6 text-2xl font-semibold text-gray-900">
+        {isApprenant ? "Cours auxquels je suis inscrit" : "Mes cours"}
+      </h1>
 
-      {isStaff && <CreateCourseForm />}
+      {isStaff && (
+        <div className="mb-8">
+          <CreateCourseForm />
+        </div>
+      )}
 
       {(courses ?? []).length === 0 && (
-        <p style={{ color: "#666" }}>
+        <p className="text-sm text-gray-500">
           {isApprenant
             ? "Vous n'êtes inscrit à aucun cours pour le moment."
             : "Aucun cours pour le moment."}
         </p>
       )}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <div className="flex flex-col gap-4">
         {(courses ?? []).map((course) => (
-          <Link
-            key={course.id}
-            href={`/cours/${course.id}`}
-            style={{
-              display: "block",
-              padding: 20,
-              border: "1px solid #ddd",
-              borderRadius: 8,
-              textDecoration: "none",
-              color: "inherit",
-            }}
-          >
-            <h2 style={{ margin: 0, fontSize: 20 }}>{course.titre}</h2>
-            <p style={{ margin: "4px 0 0", color: "#666" }}>
+          <Link key={course.id} href={`/cours/${course.id}`} className="card-link">
+            <h2 className="text-lg font-semibold text-gray-900">{course.titre}</h2>
+            <p className="mt-1 text-sm text-gray-500">
               {course.filiere} · {course.modules?.length ?? 0} module(s)
             </p>
           </Link>

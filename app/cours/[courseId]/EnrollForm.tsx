@@ -17,16 +17,13 @@ export default function EnrollForm({
   const [state, formAction, pending] = useActionState(enrollStudent, initialState);
 
   if (candidats.length === 0) {
-    return <p style={{ color: "#666", marginTop: 12 }}>Tous les élèves du tenant sont déjà inscrits.</p>;
+    return <p className="text-sm text-gray-500">Tous les élèves du tenant sont déjà inscrits.</p>;
   }
 
   return (
-    <form
-      action={formAction}
-      style={{ display: "flex", gap: 8, marginTop: 12, alignItems: "center", flexWrap: "wrap" }}
-    >
+    <form action={formAction} className="flex flex-wrap items-center gap-2">
       <input type="hidden" name="course_id" value={courseId} />
-      <select name="user_id" required style={{ padding: 8 }}>
+      <select name="user_id" required className="input w-auto flex-1">
         {candidats.map((candidat) => (
           <option key={candidat.id} value={candidat.id}>
             {candidat.nom}
@@ -34,11 +31,11 @@ export default function EnrollForm({
           </option>
         ))}
       </select>
-      <button type="submit" disabled={pending} style={{ padding: 8 }}>
+      <button type="submit" disabled={pending} className="btn-secondary">
         {pending ? "Inscription..." : "Inscrire"}
       </button>
-      {state.error && <span style={{ color: "#c00" }}>{state.error}</span>}
-      {state.success && <span style={{ color: "#080" }}>Inscrit.</span>}
+      {state.error && <span className="text-sm text-red-600">{state.error}</span>}
+      {state.success && <span className="text-sm text-green-700">Inscrit.</span>}
     </form>
   );
 }

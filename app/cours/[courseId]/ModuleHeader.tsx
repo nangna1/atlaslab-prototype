@@ -25,44 +25,42 @@ export default function ModuleHeader({
 
   if (!isEditing) {
     return (
-      <h2 style={{ fontSize: 18, borderBottom: "1px solid #ddd", paddingBottom: 8 }}>
-        {titre}{" "}
-        <button type="button" onClick={() => setIsEditing(true)} style={{ fontSize: 13 }}>
-          Modifier
-        </button>{" "}
-        <form
-          action={(formData) => {
-            if (confirm("Supprimer ce module et ses leçons ?")) {
-              deleteModule(formData);
-            }
-          }}
-          style={{ display: "inline" }}
-        >
-          <input type="hidden" name="course_id" value={courseId} />
-          <input type="hidden" name="module_id" value={moduleId} />
-          <button type="submit" style={{ fontSize: 13, color: "#c00" }}>
-            Supprimer
+      <div className="mb-3 flex items-center justify-between border-b border-gray-200 pb-2">
+        <h2 className="text-lg font-semibold text-gray-900">{titre}</h2>
+        <div className="flex items-center gap-3">
+          <button type="button" onClick={() => setIsEditing(true)} className="btn-link">
+            Modifier
           </button>
-        </form>
-      </h2>
+          <form
+            action={(formData) => {
+              if (confirm("Supprimer ce module et ses leçons ?")) {
+                deleteModule(formData);
+              }
+            }}
+          >
+            <input type="hidden" name="course_id" value={courseId} />
+            <input type="hidden" name="module_id" value={moduleId} />
+            <button type="submit" className="text-sm font-medium text-red-600 hover:underline">
+              Supprimer
+            </button>
+          </form>
+        </div>
+      </div>
     );
   }
 
   return (
-    <form
-      action={formAction}
-      style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}
-    >
+    <form action={formAction} className="mb-3 flex items-center gap-2">
       <input type="hidden" name="course_id" value={courseId} />
       <input type="hidden" name="module_id" value={moduleId} />
-      <input name="titre" type="text" defaultValue={titre} required style={{ padding: 6 }} />
-      <button type="submit" disabled={pending} style={{ padding: 6 }}>
+      <input name="titre" type="text" defaultValue={titre} required className="input w-auto flex-1" />
+      <button type="submit" disabled={pending} className="btn-primary btn-sm">
         {pending ? "Enregistrement..." : "Enregistrer"}
       </button>
-      <button type="button" onClick={() => setIsEditing(false)} style={{ padding: 6 }}>
+      <button type="button" onClick={() => setIsEditing(false)} className="btn-secondary btn-sm">
         Annuler
       </button>
-      {state.error && <span style={{ color: "#c00" }}>{state.error}</span>}
+      {state.error && <span className="text-sm text-red-600">{state.error}</span>}
     </form>
   );
 }

@@ -19,23 +19,14 @@ export default function SeanceItem({
   });
 
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: 12,
-        border: "1px solid #eee",
-        borderRadius: 6,
-      }}
-    >
-      <span>{dateLabel}</span>
+    <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3">
+      <span className="text-gray-900">{dateLabel}</span>
       {seance.lien_visio ? (
-        <a href={seance.lien_visio} target="_blank" rel="noreferrer">
+        <a href={seance.lien_visio} target="_blank" rel="noreferrer" className="btn-link">
           Rejoindre
         </a>
       ) : (
-        <span style={{ color: "#666" }}>—</span>
+        <span className="text-sm text-gray-500">—</span>
       )}
       {isStaff && (
         <form
@@ -47,7 +38,7 @@ export default function SeanceItem({
         >
           <input type="hidden" name="course_id" value={courseId} />
           <input type="hidden" name="seance_id" value={seance.id} />
-          <button type="submit" style={{ fontSize: 13, color: "#c00" }}>
+          <button type="submit" className="text-sm font-medium text-red-600 hover:underline">
             Supprimer
           </button>
         </form>

@@ -26,17 +26,17 @@ export default function LaboEEcircuit({ netlist }: { netlist: string }) {
   }
 
   return (
-    <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: 16, marginTop: 16 }}>
-      <p style={{ fontSize: 13, color: "#666", marginTop: 0 }}>
+    <div className="card">
+      <p className="mb-2 text-xs text-gray-500">
         Laboratoire de simulation électronique (ngspice-WASM, 100% navigateur)
       </p>
-      <pre style={{ background: "#f5f5f5", padding: 10, fontSize: 12, overflow: "auto" }}>
+      <pre className="overflow-auto rounded-md bg-gray-50 p-3 font-mono text-xs text-gray-700">
         {netlist}
       </pre>
-      <button onClick={runTest} style={{ padding: "8px 16px" }}>
+      <button onClick={runTest} className="btn-primary mt-3">
         Lancer la simulation
       </button>
-      <p style={{ fontSize: 13 }}>
+      <p className="mt-2 text-sm text-gray-700">
         <b>Statut :</b> {status} {result && "✅"}
       </p>
       {result && <SpiceResultChart result={result} />}

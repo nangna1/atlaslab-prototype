@@ -103,14 +103,16 @@ export default async function LessonPage({
   }
 
   return (
-    <main style={{ padding: 32, maxWidth: 900, margin: "0 auto" }}>
-      <Link href={`/cours/${course.id}`} style={{ color: "#666" }}>
+    <main className="page max-w-3xl">
+      <Link href={`/cours/${course.id}`} className="text-sm text-gray-500 hover:text-gray-700">
         ← Retour à {course.titre}
       </Link>
-      <h1>{lesson.titre}</h1>
+      <h1 className="mt-2 mb-4 text-2xl font-semibold text-gray-900">{lesson.titre}</h1>
 
       {lesson.contenu_markdown && (
-        <p style={{ lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{lesson.contenu_markdown}</p>
+        <p className="mb-4 whitespace-pre-wrap leading-relaxed text-gray-700">
+          {lesson.contenu_markdown}
+        </p>
       )}
 
       {lesson.type === "labo" && lesson.labo_type === "eecircuit" && (
@@ -130,12 +132,12 @@ export default async function LessonPage({
       )}
 
       {lesson.type === "quiz" && isStaff && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div className="flex flex-col gap-4">
           {quizQuestions.map((q, i) => (
-            <fieldset key={i} style={{ border: "1px solid #eee", borderRadius: 6, padding: 12 }}>
-              <legend>{q.question}</legend>
+            <fieldset key={i} className="card">
+              <legend className="px-1 font-medium text-gray-900">{q.question}</legend>
               {q.options.map((opt, j) => (
-                <p key={j} style={{ margin: 4, color: j === q.correct ? "#080" : undefined }}>
+                <p key={j} className={`m-1 text-sm ${j === q.correct ? "font-medium text-green-700" : "text-gray-600"}`}>
                   {j === q.correct ? "✓ " : ""}
                   {opt}
                 </p>
@@ -146,12 +148,12 @@ export default async function LessonPage({
       )}
 
       {isApprenant && lesson.type !== "quiz" && (
-        <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid #eee" }}>
+        <div className="mt-6 border-t border-gray-200 pt-4">
           {statut === "termine" ? (
-            <p style={{ color: "#080" }}>✓ Leçon terminée</p>
+            <p className="font-medium text-green-700">✓ Leçon terminée</p>
           ) : (
             <form action={markComplete}>
-              <button type="submit" style={{ padding: 10 }}>
+              <button type="submit" className="btn-primary">
                 Marquer comme terminé
               </button>
             </form>
