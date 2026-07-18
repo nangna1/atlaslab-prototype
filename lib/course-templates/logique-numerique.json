@@ -1,0 +1,40 @@
+{
+  "titre": "Introduction à la logique numérique",
+  "filiere": "Génie Électrique",
+  "modules": [
+    {
+      "titre": "Module 1 — Portes logiques",
+      "lessons": [
+        {
+          "titre": "Les portes logiques de base",
+          "type": "contenu",
+          "contenu_markdown": "Les portes logiques (AND, OR, NOT, XOR, NAND, NOR) sont les briques de base des circuits numériques. Chacune associe une ou plusieurs entrées binaires (0/1) à une sortie binaire selon une table de vérité fixe."
+        },
+        {
+          "titre": "Simulateur de portes logiques",
+          "type": "labo",
+          "labo_type": "circuitverse",
+          "labo_config": {
+            "embed_url": "https://circuitverse.org/simulator/embed/sample-embed"
+          }
+        },
+        {
+          "titre": "Quiz : logique numérique",
+          "type": "quiz",
+          "quiz_questions": [
+            {
+              "question": "Quelle porte logique donne une sortie à 1 uniquement si toutes ses entrées sont à 1 ?",
+              "options": ["AND", "OR", "NOT", "XOR"],
+              "correct": 0
+            },
+            {
+              "question": "Quelle porte inverse simplement son entrée ?",
+              "options": ["AND", "OR", "NOT", "NAND"],
+              "correct": 2
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import CreateCourseForm from "./CreateCourseForm";
+import ImportCourseForm from "./ImportCourseForm";
 
 async function signOut() {
   "use server";
@@ -63,8 +64,9 @@ export default async function CoursListPage() {
       </h1>
 
       {isStaff && (
-        <div className="mb-8">
+        <div className="mb-8 flex flex-col gap-4">
           <CreateCourseForm />
+          <ImportCourseForm />
         </div>
       )}
 

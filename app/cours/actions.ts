@@ -3,6 +3,8 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { parseCourseTemplate, insertCourseFromTemplate } from "@/lib/course-import";
+import { COURSE_TEMPLATES } from "@/lib/course-templates";
 
 export type CreateCourseState = { error?: string };
 
@@ -44,6 +46,64 @@ export async function createCourse(
   if (error || !course) return { error: error?.message ?? "Impossible de créer le cours." };
 
   redirect(`/cours/${course.id}`);
+}
+
+export type ImportCourseState = { error?: string };
+
+export async function importCourse(
+  _prevState: ImportCourseState,
+  formData: FormData,
+): Promise<ImportCourseState> {
+  const supabase = await createClient();
+  const {
+    data: { user: caller },
+  } = await supabase.auth.getUser();
+  if (!caller) return { error: "Non authentifié." };
+
+  const { data: callerProfile } = await supabase
+    .from("users")
+    .select("role, tenant_id")
+    .eq("id", caller.id)
+    .single();
+
+  if (!callerProfile || !["professeur", "admin_tenant", "super_admin"].includes(callerProfile.role)) {
+    return { error: "Action réservée au staff." };
+  }
+  if (!callerProfile.tenant_id) {
+    return { error: "Aucun établissement associé à ce compte." };
+  }
+
+  const templateId = String(formData.get("template_id") ?? "");
+  const file = formData.get("file") as File | null;
+
+  let raw: unknown;
+  if (templateId) {
+    const template = COURSE_TEMPLATES.find((t) => t.id === templateId);
+    if (!template) return { error: "Modèle introuvable." };
+    raw = template.data;
+  } else if (file && file.size > 0) {
+    const text = await file.text();
+    try {
+      raw = JSON.parse(text);
+    } catch {
+      return { error: "Fichier invalide : JSON mal formé." };
+    }
+  } else {
+    return { error: "Choisissez un modèle ou un fichier à importer." };
+  }
+
+  const parsed = parseCourseTemplate(raw);
+  if ("error" in parsed) return { error: parsed.error };
+
+  const result = await insertCourseFromTemplate(
+    supabase,
+    callerProfile.tenant_id,
+    callerProfile.role === "professeur" ? caller.id : null,
+    parsed.data,
+  );
+  if ("error" in result) return { error: result.error };
+
+  redirect(`/cours/${result.courseId}`);
 }
 
 async function requireStaff() {

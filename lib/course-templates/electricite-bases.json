@@ -1,0 +1,24 @@
+{
+  "titre": "Bases de l'électricité",
+  "filiere": "Génie Électrique",
+  "modules": [
+    {
+      "titre": "Module 1 — Grandeurs électriques",
+      "lessons": [
+        {
+          "titre": "Tension, courant, résistance",
+          "type": "contenu",
+          "contenu_markdown": "La tension (U, en volts) mesure la différence de potentiel entre deux points, le courant (I, en ampères) mesure le débit de charges électriques, et la résistance (R, en ohms) s'oppose au passage du courant. Ces trois grandeurs sont liées par la loi d'Ohm : U = R × I."
+        },
+        {
+          "titre": "Simulation : circuit résistif simple",
+          "type": "labo",
+          "labo_type": "eecircuit",
+          "labo_config": {
+            "netlist": "Circuit resistif simple\nv1 in 0 5\nr1 in out 220\nr2 out 0 330\n.op\n.end"
+          }
+        }
+      ]
+    }
+  ]
+}
