@@ -2,13 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import CreateAccountForm from "./CreateAccountForm";
-
-const ROLE_LABEL: Record<string, string> = {
-  super_admin: "Super admin",
-  admin_tenant: "Admin établissement",
-  professeur: "Professeur",
-  apprenant: "Apprenant",
-};
+import AccountRow from "./AccountRow";
 
 export default async function AdminPage() {
   const supabase = await createClient();
@@ -29,7 +23,7 @@ export default async function AdminPage() {
 
   const { data: comptes } = await supabase
     .from("users")
-    .select("id, nom, email, role")
+    .select("id, nom, email, role, actif")
     .order("nom");
 
   return (
@@ -50,20 +44,7 @@ export default async function AdminPage() {
         <h2 style={{ fontSize: 18, marginBottom: 12 }}>Comptes existants</h2>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {(comptes ?? []).map((compte) => (
-            <div
-              key={compte.id}
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                padding: 12,
-                border: "1px solid #eee",
-                borderRadius: 6,
-              }}
-            >
-              <span>{compte.nom}</span>
-              <span style={{ color: "#666" }}>{compte.email ?? "—"}</span>
-              <span style={{ color: "#666" }}>{ROLE_LABEL[compte.role] ?? compte.role}</span>
-            </div>
+            <AccountRow key={compte.id} compte={compte} isSelf={compte.id === user.id} />
           ))}
         </div>
       </section>

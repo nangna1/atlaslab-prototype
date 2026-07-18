@@ -61,3 +61,76 @@ export async function createAccount(
   revalidatePath("/admin");
   return { success: true };
 }
+
+async function requireAdmin() {
+  const supabase = await createClient();
+  const {
+    data: { user: caller },
+  } = await supabase.auth.getUser();
+  if (!caller) return { supabase, caller: null, error: "Non authentifié." } as const;
+
+  const { data: callerProfile } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", caller.id)
+    .single();
+
+  if (!callerProfile || !["admin_tenant", "super_admin"].includes(callerProfile.role)) {
+    return { supabase, caller, error: "Action réservée aux administrateurs." } as const;
+  }
+
+  return { supabase, caller, error: null } as const;
+}
+
+export type UpdateNomState = { error?: string; success?: boolean };
+
+export async function updateAccountNom(
+  _prevState: UpdateNomState,
+  formData: FormData,
+): Promise<UpdateNomState> {
+  const { supabase, error: authError } = await requireAdmin();
+  if (authError) return { error: authError };
+
+  const targetId = String(formData.get("target_id") ?? "");
+  const nom = String(formData.get("nom") ?? "").trim();
+  if (!targetId || !nom) return { error: "Le nom est requis." };
+
+  const { error } = await supabase.from("users").update({ nom }).eq("id", targetId);
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin");
+  return { success: true };
+}
+
+export type ToggleActiveState = { error?: string };
+
+export async function toggleAccountActive(
+  _prevState: ToggleActiveState,
+  formData: FormData,
+): Promise<ToggleActiveState> {
+  const { supabase, caller, error: authError } = await requireAdmin();
+  if (authError) return { error: authError };
+
+  const targetId = String(formData.get("target_id") ?? "");
+  const currentlyActif = formData.get("actif") === "true";
+  if (!targetId) return { error: "Compte invalide." };
+
+  if (targetId === caller!.id) {
+    return { error: "Vous ne pouvez pas désactiver votre propre compte." };
+  }
+
+  const admin = createAdminClient();
+  const { error: banError } = await admin.auth.admin.updateUserById(targetId, {
+    ban_duration: currentlyActif ? "876000h" : "none",
+  });
+  if (banError) return { error: banError.message };
+
+  const { error } = await supabase
+    .from("users")
+    .update({ actif: !currentlyActif })
+    .eq("id", targetId);
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin");
+  return {};
+}
