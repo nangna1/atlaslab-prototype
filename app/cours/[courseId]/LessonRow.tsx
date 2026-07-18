@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import Link from "next/link";
 import { updateLesson, deleteLesson, type UpdateLessonState } from "./actions";
+import QuizQuestionsEditor from "./QuizQuestionsEditor";
 
 const initialState: UpdateLessonState = {};
 
@@ -20,6 +21,7 @@ type Lesson = {
   contenu_markdown: string | null;
   labo_type: string | null;
   labo_config: { netlist?: string; embed_url?: string } | null;
+  quiz_questions: { question: string; options: string[]; correct: number }[] | null;
 };
 
 export default function LessonRow({ courseId, lesson }: { courseId: string; lesson: Lesson }) {
@@ -132,6 +134,7 @@ export default function LessonRow({ courseId, lesson }: { courseId: string; less
             )}
           </>
         )}
+        {type === "quiz" && <QuizQuestionsEditor initialQuestions={lesson.quiz_questions ?? []} />}
         <div style={{ display: "flex", gap: 8 }}>
           <button type="submit" disabled={pending} style={{ padding: 8 }}>
             {pending ? "Enregistrement..." : "Enregistrer"}

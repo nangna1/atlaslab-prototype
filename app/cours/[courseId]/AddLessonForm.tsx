@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { createLesson, type CreateLessonState } from "./actions";
+import QuizQuestionsEditor from "./QuizQuestionsEditor";
 
 const initialState: CreateLessonState = {};
 
@@ -72,6 +73,7 @@ export default function AddLessonForm({
           )}
         </>
       )}
+      {type === "quiz" && <QuizQuestionsEditor initialQuestions={[]} />}
       <button type="submit" disabled={pending} style={{ padding: 8 }}>
         {pending ? "Ajout..." : "Ajouter une leçon"}
       </button>

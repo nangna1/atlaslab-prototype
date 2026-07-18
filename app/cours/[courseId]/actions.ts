@@ -190,6 +190,9 @@ export async function createLesson(
     }
   }
 
+  const { quizQuestions, error: quizError } = quizQuestionsFromForm(formData, type);
+  if (quizError) return { error: quizError };
+
   const { count } = await supabase
     .from("lessons")
     .select("id", { count: "exact", head: true })
@@ -203,12 +206,54 @@ export async function createLesson(
     contenu_markdown: contenuMarkdown || null,
     labo_type: finalLaboType,
     labo_config: laboConfig,
+    quiz_questions: quizQuestions,
   });
 
   if (error) return { error: error.message };
 
   revalidatePath(`/cours/${courseId}`);
   return {};
+}
+
+type QuizQuestion = { question: string; options: string[]; correct: number };
+
+function quizQuestionsFromForm(formData: FormData, type: string) {
+  if (type !== "quiz") return { quizQuestions: null, error: null };
+
+  const raw = String(formData.get("quiz_questions") ?? "");
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return { quizQuestions: null, error: "Questions de quiz invalides." };
+  }
+
+  if (!Array.isArray(parsed) || parsed.length === 0) {
+    return { quizQuestions: null, error: "Ajoutez au moins une question." };
+  }
+
+  const questions: QuizQuestion[] = [];
+  for (const item of parsed) {
+    if (
+      !item ||
+      typeof item.question !== "string" ||
+      !item.question.trim() ||
+      !Array.isArray(item.options)
+    ) {
+      return { quizQuestions: null, error: "Chaque question doit avoir un texte et des options." };
+    }
+    const options = item.options.filter((o: unknown) => typeof o === "string" && o.trim());
+    if (options.length < 2) {
+      return { quizQuestions: null, error: "Chaque question doit avoir au moins 2 options." };
+    }
+    const correct = Number(item.correct);
+    if (!Number.isInteger(correct) || correct < 0 || correct >= item.options.length) {
+      return { quizQuestions: null, error: "Bonne réponse invalide." };
+    }
+    questions.push({ question: item.question.trim(), options, correct });
+  }
+
+  return { quizQuestions: questions, error: null };
 }
 
 function laboConfigFromForm(formData: FormData, type: string) {
@@ -250,6 +295,9 @@ export async function updateLesson(
   const { laboConfig, finalLaboType, error: laboError } = laboConfigFromForm(formData, type);
   if (laboError) return { error: laboError };
 
+  const { quizQuestions, error: quizError } = quizQuestionsFromForm(formData, type);
+  if (quizError) return { error: quizError };
+
   const { error } = await supabase
     .from("lessons")
     .update({
@@ -258,6 +306,7 @@ export async function updateLesson(
       contenu_markdown: contenuMarkdown || null,
       labo_type: finalLaboType,
       labo_config: laboConfig,
+      quiz_questions: quizQuestions,
     })
     .eq("id", lessonId);
 
