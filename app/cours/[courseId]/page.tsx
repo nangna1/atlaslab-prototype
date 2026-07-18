@@ -71,17 +71,22 @@ export default async function CoursDetailPage({
       lessons: [...(module.lessons ?? [])].sort((a, b) => a.ordre - b.ordre),
     }));
 
+  const totalLessons = modules.reduce((sum, m) => sum + m.lessons.length, 0);
+
   let termineeIds = new Set<string>();
   if (isApprenant) {
-    const { data: progress } = await supabase
-      .from("progress")
-      .select("lesson_id")
-      .eq("user_id", user.id)
-      .eq("statut", "termine");
+    const courseLessonIds = modules.flatMap((m) => m.lessons.map((l) => l.id));
+    const { data: progress } =
+      courseLessonIds.length > 0
+        ? await supabase
+            .from("progress")
+            .select("lesson_id")
+            .eq("user_id", user.id)
+            .eq("statut", "termine")
+            .in("lesson_id", courseLessonIds)
+        : { data: [] };
     termineeIds = new Set((progress ?? []).map((p) => p.lesson_id));
   }
-
-  const totalLessons = modules.reduce((sum, m) => sum + m.lessons.length, 0);
 
   type Eleve = { user_id: string; nom: string; email: string | null; termine: number };
   let eleves: Eleve[] = [];
@@ -170,8 +175,13 @@ export default async function CoursDetailPage({
         )}
       </div>
       {isApprenant && (
-        <p className="mb-6 text-sm font-medium text-gray-500">
+        <p className="mb-6 flex flex-wrap items-center gap-3 text-sm font-medium text-gray-500">
           {termineeIds.size}/{totalLessons} leçon(s) terminée(s)
+          {totalLessons > 0 && termineeIds.size === totalLessons && (
+            <Link href={`/cours/${course.id}/certificat`} className="btn-link">
+              🎓 Voir mon certificat
+            </Link>
+          )}
         </p>
       )}
 
@@ -255,6 +265,14 @@ export default async function CoursDetailPage({
                   <span className="text-sm text-gray-500">
                     {eleve.termine}/{totalLessons} terminé(s)
                   </span>
+                  {totalLessons > 0 && eleve.termine === totalLessons && (
+                    <Link
+                      href={`/cours/${course.id}/certificat?eleve=${eleve.user_id}`}
+                      className="btn-link text-sm"
+                    >
+                      Voir le certificat
+                    </Link>
+                  )}
                 </div>
               ))}
             </div>
