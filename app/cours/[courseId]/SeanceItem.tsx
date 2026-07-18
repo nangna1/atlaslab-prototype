@@ -36,7 +36,7 @@ export default function SeanceItem({
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-3">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-gray-900">{dateLabel}</span>
         {badge && <span className={badge.className}>{badge.label}</span>}
         {seance.lien_visio ? (

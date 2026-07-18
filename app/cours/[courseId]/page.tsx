@@ -248,7 +248,7 @@ export default async function CoursDetailPage({
               {eleves.map((eleve) => (
                 <div
                   key={eleve.user_id}
-                  className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3"
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white p-3"
                 >
                   <span className="text-gray-900">{eleve.nom}</span>
                   <span className="text-sm text-gray-500">{eleve.email ?? "—"}</span>

@@ -29,6 +29,7 @@ export default function AttendanceForm({
           <div key={eleve.user_id} className="flex items-center justify-between gap-2">
             <span className="text-sm text-gray-900">{eleve.nom}</span>
             <select
+              key={initialStatuts[eleve.user_id] ?? ""}
               name={`statut_${eleve.user_id}`}
               defaultValue={initialStatuts[eleve.user_id] ?? ""}
               className="input w-auto"

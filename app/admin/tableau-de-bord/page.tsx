@@ -194,7 +194,7 @@ export default async function TableauDeBordPage() {
             {eleveStats.map((e) => (
               <div
                 key={e.id}
-                className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white p-3"
+                className="flex flex-col gap-1 rounded-lg border border-gray-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-2"
               >
                 <span className="text-gray-900">{e.nom}</span>
                 <span className="text-sm text-gray-500">{e.leconsTerminees} leçon(s) terminée(s)</span>
@@ -215,7 +215,7 @@ export default async function TableauDeBordPage() {
             {profStats.map((p) => (
               <div
                 key={p.id}
-                className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white p-3"
+                className="flex flex-col gap-1 rounded-lg border border-gray-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-2"
               >
                 <span className="text-gray-900">{p.nom}</span>
                 <span className="text-sm text-gray-500">{p.coursCrees} cours créé(s)</span>

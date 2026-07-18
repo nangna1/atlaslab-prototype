@@ -48,7 +48,7 @@ export default function AccountRow({ compte, isSelf }: { compte: Compte; isSelf:
   }
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white p-3">
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white p-3">
       <span className="text-gray-900">{compte.nom}</span>
       <span className="text-sm text-gray-500">{compte.email ?? "—"}</span>
       <span className="text-sm text-gray-500">{ROLE_LABEL[compte.role] ?? compte.role}</span>
