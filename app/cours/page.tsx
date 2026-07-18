@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import CreateCourseForm from "./CreateCourseForm";
 import ImportCourseForm from "./ImportCourseForm";
 import NotificationBell from "./NotificationBell";
+import { matchesQuery } from "@/lib/search";
 
 async function signOut() {
   "use server";
@@ -12,7 +13,13 @@ async function signOut() {
   redirect("/login");
 }
 
-export default async function CoursListPage() {
+export default async function CoursListPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q: qRaw } = await searchParams;
+  const q = (qRaw ?? "").trim();
   const supabase = await createClient();
 
   const {
@@ -38,9 +45,13 @@ export default async function CoursListPage() {
         .single()
     : { data: null };
 
-  const { data: courses } = await supabase
+  const { data: allCourses } = await supabase
     .from("courses")
-    .select("id, titre, filiere, modules(id)");
+    .select("id, titre, filiere, modules(id)")
+    .order("titre");
+  const courses = q
+    ? (allCourses ?? []).filter((c) => matchesQuery(c.titre, q) || matchesQuery(c.filiere, q))
+    : allCourses;
 
   const { data: notifications } = await supabase
     .from("notifications")
@@ -89,11 +100,23 @@ export default async function CoursListPage() {
         </div>
       )}
 
+      <form method="get" className="mb-6">
+        <input
+          type="search"
+          name="q"
+          defaultValue={q}
+          placeholder="Rechercher un cours (titre, filière)…"
+          className="input max-w-sm"
+        />
+      </form>
+
       {(courses ?? []).length === 0 && (
         <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
-          {isApprenant
-            ? "Vous n'êtes inscrit à aucun cours pour le moment."
-            : "Aucun cours pour le moment."}
+          {q
+            ? `Aucun cours ne correspond à « ${q} ».`
+            : isApprenant
+              ? "Vous n'êtes inscrit à aucun cours pour le moment."
+              : "Aucun cours pour le moment."}
         </p>
       )}
 

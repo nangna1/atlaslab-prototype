@@ -4,8 +4,15 @@ import { createClient } from "@/lib/supabase/server";
 import CreateAccountForm from "./CreateAccountForm";
 import ImportAccountsForm from "./ImportAccountsForm";
 import AccountRow from "./AccountRow";
+import { matchesQuery } from "@/lib/search";
 
-export default async function AdminPage() {
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; role?: string }>;
+}) {
+  const { q: qRaw, role: roleFilter } = await searchParams;
+  const q = (qRaw ?? "").trim();
   const supabase = await createClient();
   const {
     data: { user },
@@ -22,10 +29,15 @@ export default async function AdminPage() {
     redirect("/cours");
   }
 
-  const { data: comptes } = await supabase
-    .from("users")
-    .select("id, nom, email, role, actif")
-    .order("nom");
+  const VALID_ROLES = ["professeur", "apprenant", "admin_tenant"];
+  let comptesQuery = supabase.from("users").select("id, nom, email, role, actif").order("nom");
+  if (roleFilter && VALID_ROLES.includes(roleFilter)) {
+    comptesQuery = comptesQuery.eq("role", roleFilter);
+  }
+  const { data: allComptes } = await comptesQuery;
+  const comptes = q
+    ? (allComptes ?? []).filter((c) => matchesQuery(c.nom, q) || matchesQuery(c.email, q))
+    : allComptes;
 
   return (
     <main className="page">
@@ -55,6 +67,29 @@ export default async function AdminPage() {
 
       <section>
         <h2 className="mb-3 text-lg font-semibold text-gray-900">Comptes existants</h2>
+        <form method="get" className="mb-4 flex flex-wrap gap-2">
+          <input
+            type="search"
+            name="q"
+            defaultValue={q}
+            placeholder="Rechercher un compte (nom, email)…"
+            className="input max-w-sm"
+          />
+          <select name="role" defaultValue={roleFilter ?? ""} className="input w-auto">
+            <option value="">Tous les rôles</option>
+            <option value="admin_tenant">Admin établissement</option>
+            <option value="professeur">Professeur</option>
+            <option value="apprenant">Apprenant</option>
+          </select>
+          <button type="submit" className="btn-secondary shrink-0">
+            Filtrer
+          </button>
+        </form>
+        {(comptes ?? []).length === 0 && (
+          <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
+            Aucun compte ne correspond à ces critères.
+          </p>
+        )}
         <div className="flex flex-col gap-2">
           {(comptes ?? []).map((compte) => (
             <AccountRow key={compte.id} compte={compte} isSelf={compte.id === user.id} />
