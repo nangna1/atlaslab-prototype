@@ -57,10 +57,9 @@ export default function SeanceItem({
         )}
         {isStaff && (
           <form
-            action={(formData) => {
-              if (confirm("Supprimer cette séance ?")) {
-                deleteSeance(formData);
-              }
+            action={deleteSeance}
+            onSubmit={(e) => {
+              if (!confirm("Supprimer cette séance ?")) e.preventDefault();
             }}
           >
             <input type="hidden" name="course_id" value={courseId} />

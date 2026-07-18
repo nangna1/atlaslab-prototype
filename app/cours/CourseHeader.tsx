@@ -54,10 +54,9 @@ export default function CourseHeader({
         {state.error && <span className="text-sm text-red-600">{state.error}</span>}
       </form>
       <form
-        action={(formData) => {
-          if (confirm("Supprimer ce cours et tout son contenu ?")) {
-            deleteCourse(formData);
-          }
+        action={deleteCourse}
+        onSubmit={(e) => {
+          if (!confirm("Supprimer ce cours et tout son contenu ?")) e.preventDefault();
         }}
         className="mt-2"
       >

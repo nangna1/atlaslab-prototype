@@ -47,10 +47,9 @@ export default function LessonRow({ courseId, lesson }: { courseId: string; less
             Modifier
           </button>
           <form
-            action={(formData) => {
-              if (confirm("Supprimer cette leçon ?")) {
-                deleteLesson(formData);
-              }
+            action={deleteLesson}
+            onSubmit={(e) => {
+              if (!confirm("Supprimer cette leçon ?")) e.preventDefault();
             }}
             className="shrink-0"
           >

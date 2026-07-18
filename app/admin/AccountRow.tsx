@@ -60,10 +60,9 @@ export default function AccountRow({ compte, isSelf }: { compte: Compte; isSelf:
       </button>
       {!isSelf && (
         <form
-          action={(formData) => {
-            if (!compte.actif || confirm(`Désactiver le compte de ${compte.nom} ?`)) {
-              toggleAction(formData);
-            }
+          action={toggleAction}
+          onSubmit={(e) => {
+            if (compte.actif && !confirm(`Désactiver le compte de ${compte.nom} ?`)) e.preventDefault();
           }}
           className="shrink-0"
         >

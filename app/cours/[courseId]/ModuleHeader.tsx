@@ -32,10 +32,9 @@ export default function ModuleHeader({
             Modifier
           </button>
           <form
-            action={(formData) => {
-              if (confirm("Supprimer ce module et ses leçons ?")) {
-                deleteModule(formData);
-              }
+            action={deleteModule}
+            onSubmit={(e) => {
+              if (!confirm("Supprimer ce module et ses leçons ?")) e.preventDefault();
             }}
           >
             <input type="hidden" name="course_id" value={courseId} />
