@@ -177,6 +177,9 @@ export default async function CoursDetailPage({
       {isApprenant && (
         <p className="mb-6 flex flex-wrap items-center gap-3 text-sm font-medium text-gray-500">
           {termineeIds.size}/{totalLessons} leçon(s) terminée(s)
+          <Link href={`/cours/${course.id}/bulletin/${user.id}`} className="btn-link">
+            Mon bulletin
+          </Link>
           {totalLessons > 0 && termineeIds.size === totalLessons && (
             <Link href={`/cours/${course.id}/certificat`} className="btn-link">
               🎓 Voir mon certificat
@@ -265,6 +268,9 @@ export default async function CoursDetailPage({
                   <span className="text-sm text-gray-500">
                     {eleve.termine}/{totalLessons} terminé(s)
                   </span>
+                  <Link href={`/cours/${course.id}/bulletin/${eleve.user_id}`} className="btn-link text-sm">
+                    Bulletin
+                  </Link>
                   {totalLessons > 0 && eleve.termine === totalLessons && (
                     <Link
                       href={`/cours/${course.id}/certificat?eleve=${eleve.user_id}`}
