@@ -1,23 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { Simulation } from "eecircuit-engine";
+import { Simulation, type ResultType } from "eecircuit-engine";
+import SpiceResultChart from "./SpiceResultChart";
 
 // Composant labo réutilisable, validé le 17/07/2026 (voir
 // app/labo-test-eecircuit/page.tsx pour le test d'intégration d'origine).
 export default function LaboEEcircuit({ netlist }: { netlist: string }) {
   const [status, setStatus] = useState("Prêt.");
-  const [ran, setRan] = useState(false);
+  const [result, setResult] = useState<ResultType | null>(null);
 
   async function runTest() {
     setStatus("Chargement du moteur de simulation...");
+    setResult(null);
     try {
       const sim = new Simulation();
       await sim.start();
       sim.setNetList(netlist);
       const res = await sim.runSim();
       setStatus(`Simulation terminée — ${res.dataType}, ${res.numPoints} points calculés.`);
-      setRan(true);
+      setResult(res);
     } catch (err) {
       setStatus("Erreur : " + String(err));
     }
@@ -35,8 +37,9 @@ export default function LaboEEcircuit({ netlist }: { netlist: string }) {
         Lancer la simulation
       </button>
       <p style={{ fontSize: 13 }}>
-        <b>Statut :</b> {status} {ran && "✅"}
+        <b>Statut :</b> {status} {result && "✅"}
       </p>
+      {result && <SpiceResultChart result={result} />}
     </div>
   );
 }
