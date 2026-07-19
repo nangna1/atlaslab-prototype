@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import CreateAccountForm from "./CreateAccountForm";
 import ImportAccountsForm from "./ImportAccountsForm";
 import AccountRow from "./AccountRow";
 import OnboardingChecklist from "./OnboardingChecklist";
+import AdminNav from "./AdminNav";
 import { matchesQuery } from "@/lib/search";
 
 export default async function AdminPage({
@@ -45,34 +45,7 @@ export default async function AdminPage({
 
   return (
     <main className="page">
-      <div className="mb-3 flex gap-4">
-        <Link href="/admin/tableau-de-bord" className="btn-link">
-          Tableau de bord
-        </Link>
-        <Link href="/admin/etablissement" className="btn-link">
-          Personnaliser mon établissement
-        </Link>
-        <Link href="/admin/audit" className="btn-link">
-          Historique d&apos;audit
-        </Link>
-        <Link href="/admin/insertion-professionnelle" className="btn-link">
-          Insertion professionnelle
-        </Link>
-        <Link href="/admin/rapport-impact" className="btn-link">
-          Rapport d&apos;impact
-        </Link>
-        <Link href="/admin/offres" className="btn-link">
-          Bourse aux stages/emplois
-        </Link>
-        <Link href="/admin/decrochage" className="btn-link">
-          Alerte de décrochage
-        </Link>
-        {profile.role === "super_admin" && (
-          <Link href="/admin/etablissements" className="btn-link">
-            Gérer les établissements
-          </Link>
-        )}
-      </div>
+      <AdminNav isSuperAdmin={profile.role === "super_admin"} />
       <h1 className="mb-6 text-2xl font-semibold text-gray-900">Comptes</h1>
 
       {profile.tenant_id && <OnboardingChecklist supabase={supabase} tenantId={profile.tenant_id} />}
