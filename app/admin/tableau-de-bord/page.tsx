@@ -119,6 +119,12 @@ export default async function TableauDeBordPage() {
   const formatDate = (iso: string | null) =>
     iso ? new Date(iso).toLocaleDateString("fr-FR", { dateStyle: "medium" }) : "—";
 
+  const aRisqueCount = eleveStats.filter((e) => {
+    if (!e.derniereActivite) return true;
+    const jours = Math.floor((Date.now() - new Date(e.derniereActivite).getTime()) / (1000 * 60 * 60 * 24));
+    return jours >= 7;
+  }).length;
+
   return (
     <main className="page">
       <Link href="/admin" className="text-sm text-gray-500 hover:text-gray-700">
@@ -130,6 +136,15 @@ export default async function TableauDeBordPage() {
           Exporter en CSV
         </a>
       </div>
+
+      {aRisqueCount > 0 && (
+        <Link
+          href="/admin/decrochage"
+          className="mb-6 block rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 hover:bg-amber-100"
+        >
+          ⚠️ {aRisqueCount} élève{aRisqueCount > 1 ? "s" : ""} sans activité depuis 7 jours ou plus — Voir
+        </Link>
+      )}
 
       <section className="mb-10">
         <h2 className="mb-3 text-lg font-semibold text-gray-900">Activité de l&apos;établissement</h2>
