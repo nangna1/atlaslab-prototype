@@ -57,7 +57,7 @@ self.addEventListener("fetch", (event) => {
         const cached = await cache.match(request);
         if (cached) return cached;
         const response = await fetch(request);
-        if (response.ok) cache.put(request, response.clone());
+        if (response.ok) event.waitUntil(cache.put(request, response.clone()));
         return response;
       }),
     );
@@ -73,7 +73,10 @@ self.addEventListener("fetch", (event) => {
         .then((response) => {
           if (response.ok) {
             const clone = response.clone();
-            caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, clone));
+            // waitUntil, sinon le SW peut etre suspendu avant la fin de
+            // l'ecriture cache une fois la reponse deja renvoyee au client —
+            // la page ne serait alors jamais réellement mise en cache.
+            event.waitUntil(caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, clone)));
           }
           return response;
         })

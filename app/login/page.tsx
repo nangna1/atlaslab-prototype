@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -17,6 +17,18 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [needsTotp, setNeedsTotp] = useState(false);
   const [totpCode, setTotpCode] = useState("");
+
+  useEffect(() => {
+    // Le middleware renvoie ici toute session deja authentifiee (mot de
+    // passe ou magic link) mais pas encore montee en aal2 -- on saute
+    // directement a l'etape TOTP, sans redemander email/mot de passe.
+    const supabase = createClient();
+    supabase.auth.mfa.getAuthenticatorAssuranceLevel().then(({ data }) => {
+      if (data && data.nextLevel === "aal2" && data.nextLevel !== data.currentLevel) {
+        setNeedsTotp(true);
+      }
+    });
+  }, []);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();

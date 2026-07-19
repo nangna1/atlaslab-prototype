@@ -43,10 +43,28 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Une session mot-de-passe (ou magic link, ex. "se connecter en tant que")
+  // est deja valide en aal1 avant meme la verification 2FA -- sans ce controle
+  // ici, la page /login ne serait qu'un gate cote client, contournable en
+  // naviguant directement vers n'importe quelle route protegee.
+  if (user && !isPublicRoute) {
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aal && aal.nextLevel === "aal2" && aal.nextLevel !== aal.currentLevel) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+  }
+
   if (user && isLoginRoute) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/cours";
-    return NextResponse.redirect(url);
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    const stillNeedsMfa = aal && aal.nextLevel === "aal2" && aal.nextLevel !== aal.currentLevel;
+    if (!stillNeedsMfa) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/cours";
+      return NextResponse.redirect(url);
+    }
   }
 
   return response;
