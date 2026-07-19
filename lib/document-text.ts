@@ -39,6 +39,14 @@ export async function extractDocumentText(
 
   try {
     if (nameLower.endsWith(".pdf") || file.type === "application/pdf") {
+      // pdfjs-dist (utilise par pdf-parse) attend un global DOMMatrix pour les
+      // transformations de position du texte -- en environnement serverless
+      // (Vercel), le binaire natif @napi-rs/canvas qui le fournirait
+      // normalement n'est pas fiable a charger. Polyfill pur JS a la place.
+      if (typeof (globalThis as { DOMMatrix?: unknown }).DOMMatrix === "undefined") {
+        const { default: DOMMatrixPolyfill } = await import("dommatrix");
+        (globalThis as { DOMMatrix?: unknown }).DOMMatrix = DOMMatrixPolyfill;
+      }
       const { PDFParse } = await import("pdf-parse");
       const parser = new PDFParse({ data: buffer });
       const result = await parser.getText();

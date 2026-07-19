@@ -12,6 +12,7 @@
     "@anthropic-ai/sdk": "^0.112.3",
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.110.7",
+    "dommatrix": "^0.1.1",
     "eecircuit-engine": "^1.7.0",
     "jszip": "^3.10.1",
     "mammoth": "^1.12.0",
