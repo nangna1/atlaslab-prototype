@@ -30,7 +30,10 @@ export default async function AdminPage({
   }
 
   const VALID_ROLES = ["professeur", "apprenant", "admin_tenant"];
-  let comptesQuery = supabase.from("users").select("id, nom, email, role, actif").order("nom");
+  let comptesQuery = supabase
+    .from("users")
+    .select("id, nom, email, telephone, role, actif")
+    .order("nom");
   if (roleFilter && VALID_ROLES.includes(roleFilter)) {
     comptesQuery = comptesQuery.eq("role", roleFilter);
   }

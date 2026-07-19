@@ -18,7 +18,14 @@ const ROLE_LABEL: Record<string, string> = {
   apprenant: "Apprenant",
 };
 
-type Compte = { id: string; nom: string; email: string | null; role: string; actif: boolean };
+type Compte = {
+  id: string;
+  nom: string;
+  email: string | null;
+  telephone: string | null;
+  role: string;
+  actif: boolean;
+};
 
 export default function AccountRow({ compte, isSelf }: { compte: Compte; isSelf: boolean }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -36,6 +43,13 @@ export default function AccountRow({ compte, isSelf }: { compte: Compte; isSelf:
       <form action={nomAction} className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-3">
         <input type="hidden" name="target_id" value={compte.id} />
         <input name="nom" type="text" defaultValue={compte.nom} required className="input flex-1" />
+        <input
+          name="telephone"
+          type="tel"
+          defaultValue={compte.telephone ?? ""}
+          placeholder="Téléphone WhatsApp"
+          className="input flex-1"
+        />
         <button type="submit" disabled={nomPending} className="btn-primary btn-sm">
           {nomPending ? "Enregistrement..." : "Enregistrer"}
         </button>
@@ -51,6 +65,9 @@ export default function AccountRow({ compte, isSelf }: { compte: Compte; isSelf:
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white p-3">
       <span className="text-gray-900">{compte.nom}</span>
       <span className="text-sm text-gray-500">{compte.email ?? "—"}</span>
+      <span className="text-sm text-gray-500">
+        {compte.telephone ? `📱 ${compte.telephone}` : "—"}
+      </span>
       <span className="text-sm text-gray-500">{ROLE_LABEL[compte.role] ?? compte.role}</span>
       <span className={compte.actif ? "badge-success" : "badge-error"}>
         {compte.actif ? "Actif" : "Désactivé"}

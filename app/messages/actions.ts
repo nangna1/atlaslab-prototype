@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { sendWhatsAppTemplate } from "@/lib/whatsapp";
 
 export type SendMessageState = { error?: string };
 
@@ -18,7 +19,7 @@ export async function sendMessage(
 
   const { data: profile } = await supabase
     .from("users")
-    .select("tenant_id")
+    .select("tenant_id, nom")
     .eq("id", user.id)
     .single();
   if (!profile?.tenant_id) return { error: "Compte non rattaché à un établissement." };
@@ -36,6 +37,19 @@ export async function sendMessage(
 
   if (error) {
     return { error: "Impossible d'envoyer ce message à ce destinataire." };
+  }
+
+  const { data: recipient } = await supabase
+    .from("users")
+    .select("telephone")
+    .eq("id", recipientId)
+    .single();
+  if (recipient?.telephone) {
+    await sendWhatsAppTemplate({
+      to: recipient.telephone,
+      templateName: "atlaslab_nouveau_message",
+      bodyParams: [profile.nom ?? "Un utilisateur AtlasLab"],
+    });
   }
 
   revalidatePath("/messages");

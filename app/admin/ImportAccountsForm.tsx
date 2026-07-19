@@ -19,7 +19,8 @@ export default function ImportAccountsForm() {
           style={{ color: "var(--ink-soft)", fontFamily: "var(--font-mono)" }}
         >
           Colonnes : nom, email, role (professeur/apprenant — apprenant par défaut),
-          mot_de_passe (optionnel, généré sinon)
+          mot_de_passe (optionnel, généré sinon), telephone (optionnel, active les alertes
+          WhatsApp)
         </p>
       </div>
 

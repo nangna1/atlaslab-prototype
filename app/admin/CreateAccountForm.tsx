@@ -19,6 +19,10 @@ export default function CreateAccountForm() {
         <input name="email" type="email" required className="input" />
       </label>
       <label>
+        <span className="label">Téléphone (WhatsApp, optionnel)</span>
+        <input name="telephone" type="tel" placeholder="+225 07 00 00 00 00" className="input" />
+      </label>
+      <label>
         <span className="label">Mot de passe</span>
         <input name="password" type="password" required minLength={6} className="input" />
       </label>

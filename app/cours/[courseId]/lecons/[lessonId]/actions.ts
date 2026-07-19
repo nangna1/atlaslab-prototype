@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { sendEmail } from "@/lib/email";
+import { sendWhatsAppTemplate } from "@/lib/whatsapp";
 import { logAudit } from "@/lib/audit";
 
 async function requireStaff() {
@@ -142,7 +143,7 @@ export async function gradeSubmission(
 
     const { data: eleve } = await supabase
       .from("users")
-      .select("email")
+      .select("email, telephone")
       .eq("id", updated.user_id)
       .single();
     if (eleve?.email) {
@@ -150,6 +151,13 @@ export async function gradeSubmission(
         to: eleve.email,
         subject: `Votre devoir "${assignmentTitre}" a été noté`,
         html: `<p>Votre devoir <strong>${assignmentTitre}</strong> a été noté : <strong>${noteNumber}/20</strong>.</p>`,
+      });
+    }
+    if (eleve?.telephone) {
+      await sendWhatsAppTemplate({
+        to: eleve.telephone,
+        templateName: "atlaslab_devoir_note",
+        bodyParams: [assignmentTitre, `${noteNumber}/20`],
       });
     }
   }

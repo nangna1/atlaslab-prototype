@@ -31,6 +31,7 @@ export async function createAccount(
 
   const nom = String(formData.get("nom") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
+  const telephone = String(formData.get("telephone") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const role = String(formData.get("role") ?? "");
 
@@ -55,6 +56,7 @@ export async function createAccount(
     role,
     nom,
     email,
+    telephone: telephone || null,
   });
 
   if (insertError) {
@@ -155,6 +157,7 @@ export async function importAccounts(
       role: row.role,
       nom: row.nom,
       email: row.email,
+      telephone: row.telephone ?? null,
     });
 
     if (insertError) {
@@ -214,9 +217,13 @@ export async function updateAccountNom(
 
   const targetId = String(formData.get("target_id") ?? "");
   const nom = String(formData.get("nom") ?? "").trim();
+  const telephone = String(formData.get("telephone") ?? "").trim();
   if (!targetId || !nom) return { error: "Le nom est requis." };
 
-  const { error } = await supabase.from("users").update({ nom }).eq("id", targetId);
+  const { error } = await supabase
+    .from("users")
+    .update({ nom, telephone: telephone || null })
+    .eq("id", targetId);
   if (error) return { error: error.message };
 
   await logAudit(supabase, {
@@ -225,7 +232,7 @@ export async function updateAccountNom(
     action: "compte_renomme",
     cibleType: "compte",
     cibleId: targetId,
-    details: { nom },
+    details: { nom, telephone: telephone || null },
   });
 
   revalidatePath("/admin");

@@ -3,6 +3,7 @@ export type ParsedAccountRow = {
   email: string;
   role: "professeur" | "apprenant";
   motDePasse?: string;
+  telephone?: string;
 };
 
 export type CsvParseError = { line: number; message: string };
@@ -54,6 +55,7 @@ export function parseAccountsCsv(text: string): {
   const emailIdx = header.findIndex((h) => h === "email");
   const roleIdx = header.findIndex((h) => ["role", "rôle"].includes(h));
   const passwordIdx = header.findIndex((h) => ["mot_de_passe", "password"].includes(h));
+  const telephoneIdx = header.findIndex((h) => ["telephone", "téléphone", "phone"].includes(h));
 
   if (nomIdx === -1 || emailIdx === -1) {
     return {
@@ -72,6 +74,7 @@ export function parseAccountsCsv(text: string): {
     const email = fields[emailIdx]?.trim().toLowerCase();
     const roleRaw = roleIdx >= 0 ? fields[roleIdx]?.trim().toLowerCase() : "";
     const motDePasse = passwordIdx >= 0 ? fields[passwordIdx]?.trim() : "";
+    const telephone = telephoneIdx >= 0 ? fields[telephoneIdx]?.trim() : "";
 
     if (!nom || !email) {
       errors.push({ line: i + 1, message: "Nom ou email manquant." });
@@ -95,7 +98,7 @@ export function parseAccountsCsv(text: string): {
     }
     const role = roleRaw === "professeur" ? "professeur" : "apprenant";
 
-    rows.push({ nom, email, role, motDePasse: motDePasse || undefined });
+    rows.push({ nom, email, role, motDePasse: motDePasse || undefined, telephone: telephone || undefined });
   }
 
   return { rows, errors };

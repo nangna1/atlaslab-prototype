@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { sendEmail } from "@/lib/email";
+import { sendWhatsAppTemplate } from "@/lib/whatsapp";
 
 async function requireStaff() {
   const supabase = await createClient();
@@ -374,10 +375,13 @@ export async function createSeance(
 
   const { data: inscriptions } = await supabase
     .from("enrollments")
-    .select("user_id, users(email)")
+    .select("user_id, users(email, telephone)")
     .eq("course_id", courseId);
 
-  const eleves = (inscriptions ?? []) as unknown as { user_id: string; users: { email: string | null } | null }[];
+  const eleves = (inscriptions ?? []) as unknown as {
+    user_id: string;
+    users: { email: string | null; telephone: string | null } | null;
+  }[];
 
   if (eleves.length > 0) {
     await supabase.from("notifications").insert(
@@ -396,6 +400,13 @@ export async function createSeance(
           to: eleve.users.email,
           subject: `Nouvelle séance programmée — ${course?.titre ?? ""}`,
           html: `<p>Une séance pour <strong>${course?.titre ?? "votre cours"}</strong> est programmée le <strong>${dateLabel}</strong>.</p>`,
+        });
+      }
+      if (eleve.users?.telephone) {
+        await sendWhatsAppTemplate({
+          to: eleve.users.telephone,
+          templateName: "atlaslab_seance_programmee",
+          bodyParams: [course?.titre ?? "votre cours", dateLabel],
         });
       }
     }
