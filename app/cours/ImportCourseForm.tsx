@@ -1,13 +1,15 @@
 "use client";
 
 import { useActionState } from "react";
-import { importCourse, type ImportCourseState } from "./actions";
+import { importCourse, generateCourseFromDocument, type ImportCourseState, type GenerateCourseState } from "./actions";
 import { COURSE_TEMPLATES } from "@/lib/course-templates";
 
 const initialState: ImportCourseState = {};
+const initialGenerateState: GenerateCourseState = {};
 
 export default function ImportCourseForm() {
   const [state, formAction, pending] = useActionState(importCourse, initialState);
+  const [genState, genFormAction, genPending] = useActionState(generateCourseFromDocument, initialGenerateState);
 
   return (
     <div className="card-dashed flex flex-col gap-4">
@@ -32,11 +34,35 @@ export default function ImportCourseForm() {
       <form action={formAction} className="flex flex-wrap items-center gap-2">
         <input name="file" type="file" accept=".json,application/json" required className="input w-auto flex-1" />
         <button type="submit" disabled={pending} className="btn-secondary">
-          {pending ? "Import..." : "Importer le fichier"}
+          {pending ? "Import..." : "Importer le fichier JSON"}
         </button>
       </form>
 
       {state.error && <p className="text-sm text-red-600">{state.error}</p>}
+
+      <hr className="border-gray-200" />
+
+      <div>
+        <p className="text-sm font-medium text-gray-700">Générer un cours avec l&apos;IA</p>
+        <p className="mt-1 text-xs text-gray-500">
+          À partir d&apos;un document déjà préparé (PDF ou Word .docx ou PowerPoint .pptx) — l&apos;IA le
+          découpe en modules et leçons. Résultat à relire et corriger après import.
+        </p>
+      </div>
+      <form action={genFormAction} className="flex flex-wrap items-center gap-2">
+        <input
+          name="document"
+          type="file"
+          accept=".pdf,.docx,.pptx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+          required
+          className="input w-auto flex-1"
+        />
+        <button type="submit" disabled={genPending} className="btn-secondary">
+          {genPending ? "Génération... (peut prendre une minute)" : "Générer le cours"}
+        </button>
+      </form>
+
+      {genState.error && <p className="text-sm text-red-600">{genState.error}</p>}
     </div>
   );
 }
