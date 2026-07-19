@@ -39,6 +39,15 @@ export default function AddLessonForm({
         rows={3}
         className="input"
       />
+      <label>
+        <span className="label">Document joint (PDF, Word, PPT — optionnel)</span>
+        <input
+          name="document"
+          type="file"
+          accept=".pdf,.doc,.docx,.ppt,.pptx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+          className="input"
+        />
+      </label>
       {type === "labo" && (
         <>
           <select

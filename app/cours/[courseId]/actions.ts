@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { sendEmail } from "@/lib/email";
@@ -144,6 +145,25 @@ export async function deleteModule(formData: FormData): Promise<void> {
 
 export type CreateLessonState = { error?: string };
 
+// Piece jointe de lecon (PDF/Word/PPT deja prepares par le professeur) --
+// aucune tentative de parsing/structuration, juste un fichier stocke tel
+// quel et consultable depuis la lecon. Chemin non lie a l'id de la lecon
+// (peut etre televerse avant sa creation) : dossier tenant_id + nom aleatoire.
+async function uploadLessonDocument(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  tenantId: string,
+  file: File,
+): Promise<{ url: string; nom: string } | { error: string }> {
+  const ext = file.name.split(".").pop() || "bin";
+  const path = `${tenantId}/${randomUUID()}.${ext}`;
+  const { error } = await supabase.storage
+    .from("lecons-documents")
+    .upload(path, file, { contentType: file.type });
+  if (error) return { error: error.message };
+  const { data } = supabase.storage.from("lecons-documents").getPublicUrl(path);
+  return { url: data.publicUrl, nom: file.name };
+}
+
 export async function createLesson(
   _prevState: CreateLessonState,
   formData: FormData,
@@ -156,7 +176,7 @@ export async function createLesson(
 
   const { data: callerProfile } = await supabase
     .from("users")
-    .select("role")
+    .select("role, tenant_id")
     .eq("id", caller.id)
     .single();
 
@@ -172,6 +192,7 @@ export async function createLesson(
   const laboType = String(formData.get("labo_type") ?? "");
   const netlist = String(formData.get("netlist") ?? "").trim();
   const embedUrl = String(formData.get("embed_url") ?? "").trim();
+  const documentFile = formData.get("document") as File | null;
 
   if (!courseId || !moduleId || !titre) return { error: "Le titre est requis." };
   if (!["contenu", "labo", "quiz", "seance_directe"].includes(type)) {
@@ -195,6 +216,15 @@ export async function createLesson(
   const { quizQuestions, error: quizError } = quizQuestionsFromForm(formData, type);
   if (quizError) return { error: quizError };
 
+  let pieceJointeUrl: string | null = null;
+  let pieceJointeNom: string | null = null;
+  if (documentFile && documentFile.size > 0 && callerProfile.tenant_id) {
+    const uploaded = await uploadLessonDocument(supabase, callerProfile.tenant_id, documentFile);
+    if ("error" in uploaded) return { error: uploaded.error };
+    pieceJointeUrl = uploaded.url;
+    pieceJointeNom = uploaded.nom;
+  }
+
   const { count } = await supabase
     .from("lessons")
     .select("id", { count: "exact", head: true })
@@ -209,6 +239,8 @@ export async function createLesson(
     labo_type: finalLaboType,
     labo_config: laboConfig,
     quiz_questions: quizQuestions,
+    piece_jointe_url: pieceJointeUrl,
+    piece_jointe_nom: pieceJointeNom,
   });
 
   if (error) return { error: error.message };
@@ -288,6 +320,8 @@ export async function updateLesson(
   const titre = String(formData.get("titre") ?? "").trim();
   const type = String(formData.get("type") ?? "");
   const contenuMarkdown = String(formData.get("contenu_markdown") ?? "").trim();
+  const documentFile = formData.get("document") as File | null;
+  const removeDocument = formData.get("remove_document") === "on";
 
   if (!courseId || !lessonId || !titre) return { error: "Le titre est requis." };
   if (!["contenu", "labo", "quiz", "seance_directe"].includes(type)) {
@@ -300,6 +334,24 @@ export async function updateLesson(
   const { quizQuestions, error: quizError } = quizQuestionsFromForm(formData, type);
   if (quizError) return { error: quizError };
 
+  let documentUpdate: { piece_jointe_url: string | null; piece_jointe_nom: string | null } | Record<string, never> = {};
+  if (documentFile && documentFile.size > 0) {
+    const {
+      data: { user: caller },
+    } = await supabase.auth.getUser();
+    const { data: callerProfile } = await supabase
+      .from("users")
+      .select("tenant_id")
+      .eq("id", caller!.id)
+      .single();
+    if (!callerProfile?.tenant_id) return { error: "Établissement introuvable." };
+    const uploaded = await uploadLessonDocument(supabase, callerProfile.tenant_id, documentFile);
+    if ("error" in uploaded) return { error: uploaded.error };
+    documentUpdate = { piece_jointe_url: uploaded.url, piece_jointe_nom: uploaded.nom };
+  } else if (removeDocument) {
+    documentUpdate = { piece_jointe_url: null, piece_jointe_nom: null };
+  }
+
   const { error } = await supabase
     .from("lessons")
     .update({
@@ -309,6 +361,7 @@ export async function updateLesson(
       labo_type: finalLaboType,
       labo_config: laboConfig,
       quiz_questions: quizQuestions,
+      ...documentUpdate,
     })
     .eq("id", lessonId);
 

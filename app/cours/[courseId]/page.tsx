@@ -26,6 +26,8 @@ type Lesson = {
   labo_type: string | null;
   labo_config: { netlist?: string; embed_url?: string } | null;
   quiz_questions: { question: string; options: string[]; correct: number }[] | null;
+  piece_jointe_url: string | null;
+  piece_jointe_nom: string | null;
 };
 type Module = { id: string; titre: string; ordre: number; lessons: Lesson[] | null };
 
@@ -57,7 +59,7 @@ export default async function CoursDetailPage({
   const { data: course } = await supabase
     .from("courses")
     .select(
-      "id, titre, filiere, modules(id, titre, ordre, lessons(id, titre, ordre, type, contenu_markdown, labo_type, labo_config, quiz_questions))",
+      "id, titre, filiere, modules(id, titre, ordre, lessons(id, titre, ordre, type, contenu_markdown, labo_type, labo_config, quiz_questions, piece_jointe_url, piece_jointe_nom))",
     )
     .eq("id", courseId)
     .single();

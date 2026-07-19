@@ -22,6 +22,8 @@ type Lesson = {
   labo_type: string | null;
   labo_config: { netlist?: string; embed_url?: string } | null;
   quiz_questions: { question: string; options: string[]; correct: number }[] | null;
+  piece_jointe_url?: string | null;
+  piece_jointe_nom?: string | null;
 };
 
 export default function LessonRow({ courseId, lesson }: { courseId: string; lesson: Lesson }) {
@@ -42,6 +44,7 @@ export default function LessonRow({ courseId, lesson }: { courseId: string; less
         <div className="flex items-center gap-2">
           <Link href={`/cours/${courseId}/lecons/${lesson.id}`} className="card-link flex-1">
             {TYPE_LABEL[lesson.type]} — {lesson.titre}
+            {lesson.piece_jointe_url && <span className="ml-1" title={lesson.piece_jointe_nom ?? "Document joint"}>📎</span>}
           </Link>
           <button type="button" onClick={() => setIsEditing(true)} className="btn-link shrink-0">
             Modifier
@@ -119,6 +122,30 @@ export default function LessonRow({ courseId, lesson }: { courseId: string; less
           </>
         )}
         {type === "quiz" && <QuizQuestionsEditor initialQuestions={lesson.quiz_questions ?? []} />}
+        <label>
+          <span className="label">
+            {lesson.piece_jointe_url ? "Remplacer le document joint" : "Document joint (PDF, Word, PPT)"}
+          </span>
+          {lesson.piece_jointe_url && (
+            <p className="mb-1 text-sm">
+              <a href={lesson.piece_jointe_url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">
+                📎 {lesson.piece_jointe_nom ?? "Document actuel"}
+              </a>
+            </p>
+          )}
+          <input
+            name="document"
+            type="file"
+            accept=".pdf,.doc,.docx,.ppt,.pptx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+            className="input"
+          />
+        </label>
+        {lesson.piece_jointe_url && (
+          <label className="flex items-center gap-2 text-sm text-gray-600">
+            <input type="checkbox" name="remove_document" />
+            Supprimer le document joint
+          </label>
+        )}
         <div className="flex gap-2">
           <button type="submit" disabled={pending} className="btn-primary">
             {pending ? "Enregistrement..." : "Enregistrer"}

@@ -40,7 +40,9 @@ export default async function LessonPage({
 
   const { data: lesson } = await supabase
     .from("lessons")
-    .select("id, titre, type, contenu_markdown, labo_type, labo_config, quiz_questions")
+    .select(
+      "id, titre, type, contenu_markdown, labo_type, labo_config, quiz_questions, piece_jointe_url, piece_jointe_nom",
+    )
     .eq("id", lessonId)
     .single();
 
@@ -169,6 +171,17 @@ export default async function LessonPage({
         <p className="mb-4 whitespace-pre-wrap leading-relaxed text-gray-700">
           {lesson.contenu_markdown}
         </p>
+      )}
+
+      {lesson.piece_jointe_url && (
+        <a
+          href={lesson.piece_jointe_url}
+          target="_blank"
+          rel="noreferrer"
+          className="card mb-4 flex items-center gap-2 text-sm font-medium text-indigo-600 hover:underline"
+        >
+          📎 {lesson.piece_jointe_nom ?? "Document de la leçon"} — télécharger
+        </a>
       )}
 
       {lesson.type === "labo" && lesson.labo_type === "eecircuit" && (
