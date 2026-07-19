@@ -176,6 +176,9 @@ export default async function CoursDetailPage({
           </>
         )}
       </div>
+      <Link href={`/cours/${course.id}/imprimer`} className="btn-secondary mb-6 inline-block">
+        📄 Télécharger le support de cours (PDF)
+      </Link>
       {isApprenant && (
         <p className="mb-6 flex flex-wrap items-center gap-3 text-sm font-medium text-gray-500">
           {termineeIds.size}/{totalLessons} leçon(s) terminée(s)
