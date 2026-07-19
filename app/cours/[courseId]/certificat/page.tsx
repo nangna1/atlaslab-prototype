@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import QRCode from "qrcode";
 import PrintButton from "./PrintButton";
 import CertificateTemplate from "./CertificateTemplate";
 import InsertionSelfForm from "./InsertionSelfForm";
 import { isValidInsertionStatut } from "@/lib/insertions";
+import { signCertificate } from "@/lib/certificate-verification";
 
 type Module = { lessons: { id: string }[] | null };
 
@@ -117,6 +119,11 @@ export default async function CertificatPage({
     currentInsertion = data;
   }
 
+  const certCode = signCertificate(targetUserId, courseId);
+  const qrCodeDataUrl = certCode
+    ? await QRCode.toDataURL(`https://atlaslabedu.com/verifier/${certCode}`, { width: 160, margin: 1 })
+    : null;
+
   return (
     <main
       className="page print:max-w-none print:p-0"
@@ -142,6 +149,7 @@ export default async function CertificatPage({
         eleveNom={targetUser.nom}
         courseTitre={course.titre}
         dateObtention={dateObtention}
+        qrCodeDataUrl={qrCodeDataUrl}
       />
 
       <div className="mt-6 flex justify-center">

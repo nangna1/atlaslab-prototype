@@ -20,6 +20,17 @@ function MentionsLegales({ tenant }: { tenant: Tenant }) {
   return <p className="mt-2 text-xs text-gray-400">{parts.join(" — ")}</p>;
 }
 
+function VerificationQr({ qrCodeDataUrl }: { qrCodeDataUrl: string | null }) {
+  if (!qrCodeDataUrl) return null;
+  return (
+    <div className="mt-4 flex flex-col items-center gap-1">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={qrCodeDataUrl} alt="QR code de vérification" className="h-16 w-16" />
+      <p className="text-[10px] text-gray-400">Scanner pour vérifier ce certificat</p>
+    </div>
+  );
+}
+
 function Seal() {
   return (
     <svg viewBox="0 0 100 100" className="h-20 w-20" aria-hidden>
@@ -42,11 +53,13 @@ export default function CertificateTemplate({
   eleveNom,
   courseTitre,
   dateObtention,
+  qrCodeDataUrl = null,
 }: {
   tenant: Tenant;
   eleveNom: string;
   courseTitre: string;
   dateObtention: string;
+  qrCodeDataUrl?: string | null;
 }) {
   const dateLabel = new Date(dateObtention).toLocaleDateString("fr-FR", { dateStyle: "long" });
 
@@ -71,6 +84,7 @@ export default function CertificateTemplate({
         <p className="mt-6 text-sm text-gray-500">Délivré le {dateLabel}</p>
         {tenant.nom && <p className="text-sm text-gray-500">{tenant.nom}</p>}
         <MentionsLegales tenant={tenant} />
+        <VerificationQr qrCodeDataUrl={qrCodeDataUrl} />
       </div>
     );
   }
@@ -95,6 +109,7 @@ export default function CertificateTemplate({
           <Seal />
         </div>
         <MentionsLegales tenant={tenant} />
+        <VerificationQr qrCodeDataUrl={qrCodeDataUrl} />
       </div>
     );
   }
@@ -114,6 +129,7 @@ export default function CertificateTemplate({
       <p className="mt-4 text-sm text-gray-500">Délivré le {dateLabel}</p>
       {tenant.nom && <p className="text-sm text-gray-500">{tenant.nom}</p>}
       <MentionsLegales tenant={tenant} />
+      <VerificationQr qrCodeDataUrl={qrCodeDataUrl} />
     </div>
   );
 }
