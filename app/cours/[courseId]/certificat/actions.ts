@@ -32,6 +32,32 @@ export async function upsertInsertionSelf(
 
   if (!courseId || !isValidInsertionStatut(statut)) return { error: "Statut invalide." };
 
+  // Le formulaire n'est affiché côté UI que si le cours est déjà terminé à
+  // 100%, mais un POST direct pourrait sinon fabriquer une insertion pour un
+  // cours jamais suivi — ces chiffres alimentent le rapport d'impact, ils
+  // doivent rester fiables. Même calcul que la page certificat.
+  type Module = { lessons: { id: string }[] | null };
+  const { data: course } = await supabase
+    .from("courses")
+    .select("id, modules(lessons(id))")
+    .eq("id", courseId)
+    .single();
+  if (!course) return { error: "Cours introuvable." };
+
+  const lessonIds = ((course.modules ?? []) as Module[]).flatMap((m) => (m.lessons ?? []).map((l) => l.id));
+  if (lessonIds.length === 0) return { error: "Ce cours n'est pas encore terminé." };
+
+  const { data: progressRows } = await supabase
+    .from("progress")
+    .select("lesson_id")
+    .eq("user_id", user.id)
+    .eq("statut", "termine")
+    .in("lesson_id", lessonIds);
+
+  if ((progressRows ?? []).length !== lessonIds.length) {
+    return { error: "Ce cours n'est pas encore terminé à 100%." };
+  }
+
   const { error } = await supabase.from("insertions_professionnelles").upsert(
     {
       tenant_id: profile.tenant_id,
