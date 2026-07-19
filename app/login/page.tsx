@@ -68,6 +68,9 @@ export default function LoginPage() {
           <Link href="/forgot-password" className="btn-link text-center text-sm">
             {dict.login.forgotPassword}
           </Link>
+          <Link href="/inscription-etablissement" className="btn-link text-center text-sm">
+            {dict.login.signupTenant}
+          </Link>
         </form>
       </div>
     </main>

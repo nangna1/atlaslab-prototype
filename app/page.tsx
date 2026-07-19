@@ -41,9 +41,14 @@ export default async function Home() {
         <p className="mt-4 text-lg" style={{ color: "var(--ink-soft)" }}>
           {dict.landing.subtitle}
         </p>
-        <Link href="/login" className="btn-primary mt-8 inline-flex">
-          {dict.landing.cta}
-        </Link>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+          <Link href="/login" className="btn-primary inline-flex">
+            {dict.landing.cta}
+          </Link>
+          <Link href="/inscription-etablissement" className="btn-link">
+            {dict.landing.signupCta}
+          </Link>
+        </div>
       </section>
 
       <section className="mx-auto grid max-w-5xl grid-cols-1 gap-4 px-6 pb-20 sm:grid-cols-2">

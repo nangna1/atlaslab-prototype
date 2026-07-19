@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendEmail } from "@/lib/email";
+import { logAudit } from "@/lib/audit";
 
 export type CreateTenantState = { error?: string; success?: boolean };
 
@@ -75,4 +77,95 @@ export async function createTenant(
 
   revalidatePath("/admin/etablissements");
   return { success: true };
+}
+
+async function requireSuperAdmin() {
+  const supabase = await createClient();
+  const {
+    data: { user: caller },
+  } = await supabase.auth.getUser();
+  if (!caller) return { supabase, caller: null, error: "Non authentifié." } as const;
+
+  const { data: callerProfile } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", caller.id)
+    .single();
+
+  if (!callerProfile || callerProfile.role !== "super_admin") {
+    return { supabase, caller, error: "Action réservée aux super-admins." } as const;
+  }
+
+  return { supabase, caller, error: null } as const;
+}
+
+export type TenantApprovalState = { error?: string };
+
+export async function approveTenant(
+  _prevState: TenantApprovalState,
+  formData: FormData,
+): Promise<TenantApprovalState> {
+  const { supabase, caller, error: authError } = await requireSuperAdmin();
+  if (authError) return { error: authError };
+
+  const tenantId = String(formData.get("tenant_id") ?? "");
+  if (!tenantId) return { error: "Établissement invalide." };
+
+  const admin = createAdminClient();
+  const { error } = await admin.from("tenants").update({ statut: "actif" }).eq("id", tenantId);
+  if (error) return { error: error.message };
+
+  const { data: tenantUsers } = await admin
+    .from("users")
+    .select("id, email, nom")
+    .eq("tenant_id", tenantId)
+    .eq("role", "admin_tenant");
+
+  for (const u of tenantUsers ?? []) {
+    await admin.auth.admin.updateUserById(u.id, { ban_duration: "none" });
+    if (u.email) {
+      await sendEmail({
+        to: u.email,
+        subject: "Votre établissement AtlasLab est approuvé",
+        html: `<p>Bonjour ${u.nom}, votre établissement a été approuvé. Vous pouvez maintenant <a href="https://atlaslabedu.com/login">vous connecter</a>.</p>`,
+      });
+    }
+  }
+
+  await logAudit(supabase, {
+    acteurId: caller!.id,
+    tenantId,
+    action: "etablissement_approuve",
+    cibleType: "tenant",
+    cibleId: tenantId,
+  });
+
+  revalidatePath("/admin/etablissements");
+  return {};
+}
+
+export async function rejectTenant(
+  _prevState: TenantApprovalState,
+  formData: FormData,
+): Promise<TenantApprovalState> {
+  const { supabase, caller, error: authError } = await requireSuperAdmin();
+  if (authError) return { error: authError };
+
+  const tenantId = String(formData.get("tenant_id") ?? "");
+  if (!tenantId) return { error: "Établissement invalide." };
+
+  const admin = createAdminClient();
+  const { error } = await admin.from("tenants").update({ statut: "refuse" }).eq("id", tenantId);
+  if (error) return { error: error.message };
+
+  await logAudit(supabase, {
+    acteurId: caller!.id,
+    tenantId,
+    action: "etablissement_refuse",
+    cibleType: "tenant",
+    cibleId: tenantId,
+  });
+
+  revalidatePath("/admin/etablissements");
+  return {};
 }

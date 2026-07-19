@@ -6,6 +6,7 @@ export type Dictionary = {
     title: string;
     subtitle: string;
     cta: string;
+    signupCta: string;
     features: { title: string; description: string }[];
     footer: string;
   };
@@ -16,6 +17,24 @@ export type Dictionary = {
     submit: string;
     submitting: string;
     forgotPassword: string;
+    signupTenant: string;
+  };
+  signupTenant: {
+    eyebrow: string;
+    title: string;
+    subtitle: string;
+    nomEtablissement: string;
+    slug: string;
+    slugHint: string;
+    adminNom: string;
+    adminEmail: string;
+    adminPassword: string;
+    submit: string;
+    submitting: string;
+    slugTakenError: string;
+    genericError: string;
+    sentMessage: string;
+    backToLogin: string;
   };
   forgotPassword: {
     subtitle: string;
@@ -44,6 +63,7 @@ const fr: Dictionary = {
     subtitle:
       "Cours, quiz, devoirs, séances en direct et simulations réelles — une seule plateforme pour chaque établissement.",
     cta: "Se connecter",
+    signupCta: "Inscrire mon établissement",
     features: [
       {
         title: "Laboratoires virtuels",
@@ -74,6 +94,25 @@ const fr: Dictionary = {
     submit: "Se connecter",
     submitting: "Connexion...",
     forgotPassword: "Mot de passe oublié ?",
+    signupTenant: "Nouvel établissement ? Inscrivez-le",
+  },
+  signupTenant: {
+    eyebrow: "Nouvel établissement",
+    title: "Inscrire votre établissement",
+    subtitle: "Créez votre espace AtlasLab en quelques instants — aucune approbation manuelle requise.",
+    nomEtablissement: "Nom de l'établissement",
+    slug: "Identifiant (URL)",
+    slugHint: "Utilisé en interne pour identifier votre établissement, sans espaces ni accents.",
+    adminNom: "Votre nom",
+    adminEmail: "Votre email",
+    adminPassword: "Mot de passe",
+    submit: "Créer mon établissement",
+    submitting: "Création...",
+    slugTakenError: "Cet identifiant est déjà pris, essayez-en un autre.",
+    genericError: "Impossible de créer l'établissement, réessayez.",
+    sentMessage:
+      "Votre demande a été envoyée. Un administrateur AtlasLab doit l'approuver avant que vous puissiez vous connecter — vous recevrez un email dès que ce sera fait.",
+    backToLogin: "← Retour à la connexion",
   },
   forgotPassword: {
     subtitle: "Mot de passe oublié",
@@ -101,6 +140,7 @@ const en: Dictionary = {
     subtitle:
       "Courses, quizzes, assignments, live sessions and real simulations — one platform for every institution.",
     cta: "Sign in",
+    signupCta: "Register my institution",
     features: [
       {
         title: "Virtual labs",
@@ -128,6 +168,25 @@ const en: Dictionary = {
     submit: "Sign in",
     submitting: "Signing in...",
     forgotPassword: "Forgot your password?",
+    signupTenant: "New institution? Register it",
+  },
+  signupTenant: {
+    eyebrow: "New institution",
+    title: "Register your institution",
+    subtitle: "Create your AtlasLab space in a few moments — no manual approval required.",
+    nomEtablissement: "Institution name",
+    slug: "Identifier (URL)",
+    slugHint: "Used internally to identify your institution, no spaces or accents.",
+    adminNom: "Your name",
+    adminEmail: "Your email",
+    adminPassword: "Password",
+    submit: "Create my institution",
+    submitting: "Creating...",
+    slugTakenError: "This identifier is already taken, try another one.",
+    genericError: "Could not create the institution, please try again.",
+    sentMessage:
+      "Your request has been sent. An AtlasLab administrator must approve it before you can sign in — you'll receive an email once that's done.",
+    backToLogin: "← Back to sign in",
   },
   forgotPassword: {
     subtitle: "Forgot password",
@@ -154,6 +213,7 @@ const ar: Dictionary = {
     title: "منصة التعليم الإلكتروني والمختبرات الافتراضية للتعليم التقني والمهني",
     subtitle: "دورات، اختبارات، واجبات، حصص مباشرة ومحاكاة حقيقية — منصة واحدة لكل مؤسسة.",
     cta: "تسجيل الدخول",
+    signupCta: "سجّل مؤسستك",
     features: [
       {
         title: "مختبرات افتراضية",
@@ -181,6 +241,25 @@ const ar: Dictionary = {
     submit: "تسجيل الدخول",
     submitting: "جارٍ تسجيل الدخول...",
     forgotPassword: "هل نسيت كلمة المرور؟",
+    signupTenant: "مؤسسة جديدة؟ سجّلها",
+  },
+  signupTenant: {
+    eyebrow: "مؤسسة جديدة",
+    title: "تسجيل مؤسستك",
+    subtitle: "أنشئ مساحة AtlasLab الخاصة بك في لحظات — دون الحاجة إلى موافقة يدوية.",
+    nomEtablissement: "اسم المؤسسة",
+    slug: "المعرّف (الرابط)",
+    slugHint: "يُستخدم داخليًا لتعريف مؤسستك، دون مسافات أو رموز خاصة.",
+    adminNom: "اسمك",
+    adminEmail: "بريدك الإلكتروني",
+    adminPassword: "كلمة المرور",
+    submit: "إنشاء مؤسستي",
+    submitting: "جارٍ الإنشاء...",
+    slugTakenError: "هذا المعرّف مُستخدم بالفعل، جرّب معرّفًا آخر.",
+    genericError: "تعذّر إنشاء المؤسسة، يرجى المحاولة مرة أخرى.",
+    sentMessage:
+      "تم إرسال طلبك. يجب أن يوافق عليه أحد مسؤولي AtlasLab قبل أن تتمكن من تسجيل الدخول — ستتلقى بريدًا إلكترونيًا بمجرد الموافقة.",
+    backToLogin: "← العودة إلى تسجيل الدخول",
   },
   forgotPassword: {
     subtitle: "نسيت كلمة المرور",
