@@ -3,6 +3,7 @@ import { Big_Shoulders, Source_Serif_4, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import RegisterServiceWorker from "./RegisterServiceWorker";
 import OfflineStatusBanner from "./OfflineStatusBanner";
+import DemoReturnBanner from "./DemoReturnBanner";
 import { getLocale } from "@/lib/i18n/get-locale";
 import { isRtl } from "@/lib/i18n/config";
 
@@ -49,6 +50,7 @@ export default async function RootLayout({
       className={`${fontDisplay.variable} ${fontBody.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <DemoReturnBanner />
         <OfflineStatusBanner />
         {children}
         <RegisterServiceWorker />

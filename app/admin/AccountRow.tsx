@@ -7,6 +7,7 @@ import {
   type UpdateNomState,
   type ToggleActiveState,
 } from "./actions";
+import LoginAsButton from "./LoginAsButton";
 
 const nomInitialState: UpdateNomState = {};
 const toggleInitialState: ToggleActiveState = {};
@@ -75,6 +76,9 @@ export default function AccountRow({ compte, isSelf }: { compte: Compte; isSelf:
       <button type="button" onClick={() => setIsEditing(true)} className="btn-link shrink-0">
         Modifier
       </button>
+      {!isSelf && compte.role !== "super_admin" && compte.actif && (
+        <LoginAsButton targetUserId={compte.id} targetNom={compte.nom} />
+      )}
       {!isSelf && (
         <form
           action={toggleAction}

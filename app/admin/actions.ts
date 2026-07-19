@@ -279,3 +279,81 @@ export async function toggleAccountActive(
   revalidatePath("/admin");
   return {};
 }
+
+export type LoginAsResult = { error?: string; actionLink?: string };
+
+const SITE_URL = "https://atlaslabedu.com";
+
+async function mintSignInLink(email: string): Promise<LoginAsResult> {
+  const admin = createAdminClient();
+  const { data, error } = await admin.auth.admin.generateLink({
+    type: "magiclink",
+    email,
+    options: { redirectTo: `${SITE_URL}/auth/callback?next=/cours` },
+  });
+
+  if (error || !data?.properties?.action_link) {
+    return { error: error?.message ?? "Impossible de générer le lien de connexion." };
+  }
+  return { actionLink: data.properties.action_link };
+}
+
+// Lien pour revenir à SON PROPRE compte après avoir bascule sur un autre —
+// les cookies de session sont partages par onglet/navigateur, retaper son mot
+// de passe serait le seul autre moyen de revenir une fois qu'on a bascule.
+export async function generateOwnReturnLink(): Promise<LoginAsResult> {
+  const supabase = await createClient();
+  const {
+    data: { user: caller },
+  } = await supabase.auth.getUser();
+  if (!caller?.email) return { error: "Non authentifié." };
+
+  return mintSignInLink(caller.email);
+}
+
+// "Se connecter en tant que" : admin_tenant (son propre etablissement) ou
+// super_admin peuvent generer un lien de connexion pour un autre compte, sans
+// connaitre son mot de passe -- utile pour verifier/demontrer une vue sans
+// jongler avec plusieurs comptes. Jamais vers un compte super_admin
+// (escalade de privilege), jamais vers un compte desactive.
+export async function generateLoginAsLink(targetUserId: string): Promise<LoginAsResult> {
+  const supabase = await createClient();
+  const {
+    data: { user: caller },
+  } = await supabase.auth.getUser();
+  if (!caller) return { error: "Non authentifié." };
+
+  const { data: callerProfile } = await supabase
+    .from("users")
+    .select("role, tenant_id")
+    .eq("id", caller.id)
+    .single();
+
+  if (!callerProfile || !["admin_tenant", "super_admin"].includes(callerProfile.role)) {
+    return { error: "Action réservée aux administrateurs." };
+  }
+
+  const admin = createAdminClient();
+  const { data: target } = await admin
+    .from("users")
+    .select("email, role, tenant_id, actif")
+    .eq("id", targetUserId)
+    .single();
+
+  if (!target?.email) return { error: "Compte introuvable." };
+  if (target.role === "super_admin") return { error: "Impossible de se connecter en tant que super-admin." };
+  if (target.actif === false) return { error: "Ce compte est désactivé." };
+  if (callerProfile.role === "admin_tenant" && target.tenant_id !== callerProfile.tenant_id) {
+    return { error: "Ce compte n'appartient pas à votre établissement." };
+  }
+
+  await logAudit(supabase, {
+    acteurId: caller.id,
+    tenantId: callerProfile.tenant_id,
+    action: "connexion_en_tant_que",
+    cibleType: "compte",
+    cibleId: targetUserId,
+  });
+
+  return mintSignInLink(target.email);
+}
