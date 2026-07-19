@@ -3,6 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/lib/audit";
+import { sendEmail } from "@/lib/email";
+import { sendWhatsAppTemplate } from "@/lib/whatsapp";
+import { normalizeForSearch } from "@/lib/search";
 
 async function requireStaff() {
   const supabase = await createClient();
@@ -71,9 +74,78 @@ export async function createOffre(
     details: { titre, entreprise, type },
   });
 
+  await notifyMatchingEleves({ supabase, tenantId, titre, entreprise, type, filiere });
+
   revalidatePath("/admin/offres");
   revalidatePath("/offres");
   return { success: true };
+}
+
+// Alerte les eleves de la filiere concernee (ou tous les eleves du tenant si
+// aucune filiere n'est precisee) qu'une nouvelle offre vient d'etre publiee —
+// in-app, email et WhatsApp (best-effort, une erreur d'envoi n'annule jamais
+// la publication de l'offre elle-meme).
+async function notifyMatchingEleves({
+  supabase,
+  tenantId,
+  titre,
+  entreprise,
+  type,
+  filiere,
+}: {
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  tenantId: string;
+  titre: string;
+  entreprise: string;
+  type: string;
+  filiere: string;
+}) {
+  let targetIds: string[];
+
+  if (filiere) {
+    const { data: coursesTenant } = await supabase.from("courses").select("id, filiere").eq("tenant_id", tenantId);
+    const matchCourseIds = (coursesTenant ?? [])
+      .filter((c) => c.filiere && normalizeForSearch(c.filiere) === normalizeForSearch(filiere))
+      .map((c) => c.id);
+    if (matchCourseIds.length === 0) return;
+    const { data: enrolled } = await supabase.from("enrollments").select("user_id").in("course_id", matchCourseIds);
+    targetIds = [...new Set((enrolled ?? []).map((e) => e.user_id))];
+  } else {
+    const { data: allEleves } = await supabase.from("users").select("id").eq("tenant_id", tenantId).eq("role", "apprenant");
+    targetIds = (allEleves ?? []).map((u) => u.id);
+  }
+
+  if (targetIds.length === 0) return;
+
+  const typeLabel = type === "stage" ? "stage" : "emploi";
+
+  await supabase.from("notifications").insert(
+    targetIds.map((id) => ({
+      user_id: id,
+      type: "nouvelle_offre",
+      titre: "Nouvelle offre publiée",
+      message: `${entreprise} recrute : « ${titre} » (${typeLabel}).`,
+      lien: "/offres",
+    })),
+  );
+
+  const { data: eleves } = await supabase.from("users").select("email, telephone").in("id", targetIds);
+  for (const e of eleves ?? []) {
+    if (e.email) {
+      await sendEmail({
+        to: e.email,
+        subject: `Nouvelle offre — ${titre}`,
+        html: `<p><strong>${entreprise}</strong> propose : <strong>${titre}</strong> (${typeLabel}).</p><p>Consultez-la sur la <a href="https://atlaslabedu.com/offres">bourse aux stages/emplois</a>.</p>`,
+      });
+    }
+    if (e.telephone) {
+      await sendWhatsAppTemplate({
+        to: e.telephone,
+        templateName: "atlaslab_nouvelle_offre",
+        bodyParams: [entreprise, titre],
+      });
+    }
+  }
 }
 
 export type ToggleOffreState = { error?: string };
