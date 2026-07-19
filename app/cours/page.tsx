@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import CreateCourseForm from "./CreateCourseForm";
 import ImportCourseForm from "./ImportCourseForm";
 import NotificationBell from "./NotificationBell";
+import SignOutButton from "./SignOutButton";
 import { matchesQuery } from "@/lib/search";
 
 async function signOut() {
@@ -95,15 +96,7 @@ export default async function CoursListPage({
             )}
           </Link>
           <NotificationBell notifications={notifications ?? []} />
-          <form action={signOut}>
-            <button
-              type="submit"
-              className="btn-link"
-              style={{ color: "var(--ink-soft)" }}
-            >
-              Se déconnecter
-            </button>
-          </form>
+          <SignOutButton action={signOut} />
         </div>
       </div>
       <h1 className="mb-6 text-2xl font-bold" style={{ color: "var(--ink)" }}>

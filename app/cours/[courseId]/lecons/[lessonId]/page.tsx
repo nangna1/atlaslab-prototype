@@ -172,11 +172,22 @@ export default async function LessonPage({
       )}
 
       {lesson.type === "labo" && lesson.labo_type === "eecircuit" && (
-        <LaboEEcircuit netlist={laboConfig.netlist ?? ""} />
+        <>
+          <p className="mb-2 text-xs" style={{ color: "var(--ink-soft)" }}>
+            📴 Disponible hors-ligne dès cette première visite (simulation calculée dans le
+            navigateur).
+          </p>
+          <LaboEEcircuit netlist={laboConfig.netlist ?? ""} />
+        </>
       )}
 
       {lesson.type === "labo" && lesson.labo_type === "circuitverse" && (
-        <LaboCircuitVerse embedUrl={laboConfig.embed_url ?? ""} />
+        <>
+          <p className="mb-2 text-xs" style={{ color: "var(--ink-soft)" }}>
+            🌐 Nécessite une connexion internet (laboratoire hébergé sur circuitverse.org).
+          </p>
+          <LaboCircuitVerse embedUrl={laboConfig.embed_url ?? ""} />
+        </>
       )}
 
       {lesson.type === "quiz" && isApprenant && (
