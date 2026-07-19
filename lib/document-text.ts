@@ -58,7 +58,8 @@ export async function extractDocumentText(
     }
 
     return { error: "Format non pris en charge (PDF, DOCX ou PPTX uniquement — .doc/.ppt binaires anciens non supportés)." };
-  } catch {
+  } catch (err) {
+    console.error("Échec extraction texte document :", err);
     return { error: "Impossible de lire ce document — il est peut-être corrompu ou protégé." };
   }
 }
