@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import CreateAccountForm from "./CreateAccountForm";
 import ImportAccountsForm from "./ImportAccountsForm";
 import AccountRow from "./AccountRow";
+import OnboardingChecklist from "./OnboardingChecklist";
 import { matchesQuery } from "@/lib/search";
 
 export default async function AdminPage({
@@ -21,7 +22,7 @@ export default async function AdminPage({
 
   const { data: profile } = await supabase
     .from("users")
-    .select("role")
+    .select("role, tenant_id")
     .eq("id", user.id)
     .single();
 
@@ -73,6 +74,8 @@ export default async function AdminPage({
         )}
       </div>
       <h1 className="mb-6 text-2xl font-semibold text-gray-900">Comptes</h1>
+
+      {profile.tenant_id && <OnboardingChecklist supabase={supabase} tenantId={profile.tenant_id} />}
 
       <section className="mb-10">
         <h2 className="mb-3 text-lg font-semibold text-gray-900">Créer un compte</h2>
