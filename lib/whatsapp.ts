@@ -1,7 +1,7 @@
 const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
 const WHATSAPP_PHONE_ID = process.env.WHATSAPP_PHONE_ID;
 
-function normalizePhone(telephone: string): string {
+export function normalizePhone(telephone: string): string {
   return telephone.replace(/[^\d+]/g, "").replace(/^\+/, "");
 }
 
@@ -62,5 +62,70 @@ export async function sendWhatsAppTemplate({
     }
   } catch (err) {
     console.error("Échec envoi WhatsApp :", err);
+  }
+}
+
+/**
+ * Réponse en texte libre — valide uniquement dans les 24h suivant un message
+ * entrant de ce numéro (fenêtre de conversation gratuite ouverte par
+ * l'utilisateur lui-même). Contrairement à sendWhatsAppTemplate, jamais utilisé
+ * pour une notification à froid.
+ */
+export async function sendWhatsAppText({ to, text }: { to: string; text: string }) {
+  if (!WHATSAPP_TOKEN || !WHATSAPP_PHONE_ID) {
+    console.warn("WHATSAPP_TOKEN/WHATSAPP_PHONE_ID non configurés — réponse WhatsApp ignorée ->", to);
+    return;
+  }
+
+  const phone = normalizePhone(to);
+  if (!phone) return;
+
+  try {
+    const res = await fetch(`https://graph.facebook.com/v21.0/${WHATSAPP_PHONE_ID}/messages`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${WHATSAPP_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        to: phone,
+        type: "text",
+        text: { body: text },
+      }),
+    });
+
+    if (!res.ok) {
+      const body = await res.text();
+      console.error("Échec envoi WhatsApp (texte) :", res.status, body, "->", phone);
+    }
+  } catch (err) {
+    console.error("Échec envoi WhatsApp (texte) :", err);
+  }
+}
+
+/** Télécharge un media entrant (photo) depuis l'API Cloud WhatsApp. */
+export async function downloadWhatsAppMedia(
+  mediaId: string,
+): Promise<{ bytes: ArrayBuffer; mimeType: string } | null> {
+  if (!WHATSAPP_TOKEN) return null;
+
+  try {
+    const metaRes = await fetch(`https://graph.facebook.com/v21.0/${mediaId}`, {
+      headers: { Authorization: `Bearer ${WHATSAPP_TOKEN}` },
+    });
+    if (!metaRes.ok) return null;
+    const meta = (await metaRes.json()) as { url?: string; mime_type?: string };
+    if (!meta.url) return null;
+
+    const fileRes = await fetch(meta.url, {
+      headers: { Authorization: `Bearer ${WHATSAPP_TOKEN}` },
+    });
+    if (!fileRes.ok) return null;
+
+    return { bytes: await fileRes.arrayBuffer(), mimeType: meta.mime_type ?? "image/jpeg" };
+  } catch (err) {
+    console.error("Échec téléchargement media WhatsApp :", err);
+    return null;
   }
 }

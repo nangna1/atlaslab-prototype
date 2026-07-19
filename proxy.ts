@@ -10,6 +10,9 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|sw\\.js|manifest\\.webmanifest|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico)$).*)",
+    // /api/* exclu : ce sont des webhooks/routes serveur-a-serveur (ex. Meta
+    // WhatsApp) sans session navigateur -- la redirection /login casserait
+    // silencieusement tout appel entrant.
+    "/((?!_next/static|_next/image|favicon.ico|sw\\.js|manifest\\.webmanifest|api/|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico)$).*)",
   ],
 };
