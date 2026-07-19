@@ -15,6 +15,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [needsTotp, setNeedsTotp] = useState(false);
+  const [totpCode, setTotpCode] = useState("");
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -30,6 +32,42 @@ export default function LoginPage() {
       return;
     }
 
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aal && aal.nextLevel === "aal2" && aal.nextLevel !== aal.currentLevel) {
+      setLoading(false);
+      setNeedsTotp(true);
+      return;
+    }
+
+    router.push("/cours");
+    router.refresh();
+  }
+
+  async function handleTotpSubmit(event: FormEvent) {
+    event.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    const supabase = createClient();
+    const { data: factors } = await supabase.auth.mfa.listFactors();
+    const factorId = factors?.totp?.[0]?.id;
+    if (!factorId) {
+      setError("Aucun facteur de double authentification trouvé.");
+      setLoading(false);
+      return;
+    }
+
+    const { error } = await supabase.auth.mfa.challengeAndVerify({
+      factorId,
+      code: totpCode.trim(),
+    });
+
+    if (error) {
+      setError("Code invalide, réessayez.");
+      setLoading(false);
+      return;
+    }
+
     router.push("/cours");
     router.refresh();
   }
@@ -40,38 +78,61 @@ export default function LoginPage() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/logo-atlaslab.png" alt="AtlasLab" className="mx-auto mb-2 h-20 w-auto" />
         <p className="mb-6 text-center text-sm text-gray-500">{dict.login.subtitle}</p>
-        <form onSubmit={handleSubmit} className="card flex flex-col gap-4">
-          <label>
-            <span className="label">{dict.login.email}</span>
+        {needsTotp ? (
+          <form onSubmit={handleTotpSubmit} className="card flex flex-col gap-4">
+            <p className="text-sm text-gray-600">
+              Entrez le code à 6 chiffres de votre application d&apos;authentification.
+            </p>
             <input
-              type="email"
+              type="text"
+              inputMode="numeric"
               required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="input"
+              autoFocus
+              maxLength={6}
+              value={totpCode}
+              onChange={(e) => setTotpCode(e.target.value)}
+              className="input text-center"
+              placeholder="123456"
             />
-          </label>
-          <label>
-            <span className="label">{dict.login.password}</span>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="input"
-            />
-          </label>
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          <button type="submit" disabled={loading} className="btn-primary w-full">
-            {loading ? dict.login.submitting : dict.login.submit}
-          </button>
-          <Link href="/forgot-password" className="btn-link text-center text-sm">
-            {dict.login.forgotPassword}
-          </Link>
-          <Link href="/inscription-etablissement" className="btn-link text-center text-sm">
-            {dict.login.signupTenant}
-          </Link>
-        </form>
+            {error && <p className="text-sm text-red-600">{error}</p>}
+            <button type="submit" disabled={loading || totpCode.length < 6} className="btn-primary w-full">
+              {loading ? "Vérification..." : "Vérifier"}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleSubmit} className="card flex flex-col gap-4">
+            <label>
+              <span className="label">{dict.login.email}</span>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="input"
+              />
+            </label>
+            <label>
+              <span className="label">{dict.login.password}</span>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="input"
+              />
+            </label>
+            {error && <p className="text-sm text-red-600">{error}</p>}
+            <button type="submit" disabled={loading} className="btn-primary w-full">
+              {loading ? dict.login.submitting : dict.login.submit}
+            </button>
+            <Link href="/forgot-password" className="btn-link text-center text-sm">
+              {dict.login.forgotPassword}
+            </Link>
+            <Link href="/inscription-etablissement" className="btn-link text-center text-sm">
+              {dict.login.signupTenant}
+            </Link>
+          </form>
+        )}
       </div>
     </main>
   );

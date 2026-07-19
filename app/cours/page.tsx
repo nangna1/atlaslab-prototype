@@ -87,6 +87,9 @@ export default async function CoursListPage({
           <Link href="/offres" className="btn-link" style={{ color: "var(--ink-soft)" }}>
             Offres
           </Link>
+          <Link href="/securite" className="btn-link" style={{ color: "var(--ink-soft)" }}>
+            Sécurité
+          </Link>
           <Link href="/messages" className="btn-link relative" style={{ color: "var(--ink-soft)" }}>
             Messages
             {!!unreadMessages && unreadMessages > 0 && (
