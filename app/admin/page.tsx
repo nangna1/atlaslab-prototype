@@ -54,6 +54,9 @@ export default async function AdminPage({
         <Link href="/admin/audit" className="btn-link">
           Historique d&apos;audit
         </Link>
+        <Link href="/admin/insertion-professionnelle" className="btn-link">
+          Insertion professionnelle
+        </Link>
         {profile.role === "super_admin" && (
           <Link href="/admin/etablissements" className="btn-link">
             Gérer les établissements

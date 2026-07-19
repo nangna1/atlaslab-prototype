@@ -3,6 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import PrintButton from "./PrintButton";
 import CertificateTemplate from "./CertificateTemplate";
+import InsertionSelfForm from "./InsertionSelfForm";
+import { isValidInsertionStatut } from "@/lib/insertions";
 
 type Module = { lessons: { id: string }[] | null };
 
@@ -103,6 +105,18 @@ export default async function CertificatPage({
     (progressRows ?? [])[0].updated_at,
   );
 
+  const isOwnCertificate = isApprenant && targetUserId === user.id;
+  let currentInsertion: { statut: string; entreprise: string | null; poste: string | null } | null = null;
+  if (isOwnCertificate) {
+    const { data } = await supabase
+      .from("insertions_professionnelles")
+      .select("statut, entreprise, poste")
+      .eq("user_id", targetUserId)
+      .eq("course_id", courseId)
+      .maybeSingle();
+    currentInsertion = data;
+  }
+
   return (
     <main
       className="page print:max-w-none print:p-0"
@@ -133,6 +147,23 @@ export default async function CertificatPage({
       <div className="mt-6 flex justify-center">
         <PrintButton />
       </div>
+
+      {isOwnCertificate && (
+        <div className="flex justify-center">
+          <InsertionSelfForm
+            courseId={courseId}
+            current={
+              currentInsertion && isValidInsertionStatut(currentInsertion.statut)
+                ? {
+                    statut: currentInsertion.statut,
+                    entreprise: currentInsertion.entreprise,
+                    poste: currentInsertion.poste,
+                  }
+                : null
+            }
+          />
+        </div>
+      )}
     </main>
   );
 }
