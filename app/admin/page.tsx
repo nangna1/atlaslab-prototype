@@ -60,6 +60,9 @@ export default async function AdminPage({
         <Link href="/admin/rapport-impact" className="btn-link">
           Rapport d&apos;impact
         </Link>
+        <Link href="/admin/offres" className="btn-link">
+          Bourse aux stages/emplois
+        </Link>
         {profile.role === "super_admin" && (
           <Link href="/admin/etablissements" className="btn-link">
             Gérer les établissements

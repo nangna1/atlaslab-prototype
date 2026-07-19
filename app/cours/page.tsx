@@ -84,6 +84,9 @@ export default async function CoursListPage({
           </p>
         )}
         <div className="flex items-center gap-4">
+          <Link href="/offres" className="btn-link" style={{ color: "var(--ink-soft)" }}>
+            Offres
+          </Link>
           <Link href="/messages" className="btn-link relative" style={{ color: "var(--ink-soft)" }}>
             Messages
             {!!unreadMessages && unreadMessages > 0 && (
