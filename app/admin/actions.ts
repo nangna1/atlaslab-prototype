@@ -347,6 +347,15 @@ export async function generateLoginAsLink(targetUserId: string): Promise<LoginAs
     return { error: "Ce compte n'appartient pas à votre établissement." };
   }
 
+  // La 2FA du compte cible s'applique aussi a une connexion via ce lien (le
+  // middleware la fait respecter, voir lib/supabase/proxy.ts) -- sans le code
+  // de l'utilisateur cible, la bascule resterait bloquee sur un mur TOTP.
+  // Autant le dire clairement plutot que generer un lien sans issue.
+  const { data: factors } = await admin.auth.admin.mfa.listFactors({ userId: targetUserId });
+  if ((factors?.factors ?? []).some((f) => f.status === "verified")) {
+    return { error: "Ce compte a la double authentification activée — connexion en tant que lui indisponible." };
+  }
+
   await logAudit(supabase, {
     acteurId: caller.id,
     tenantId: callerProfile.tenant_id,
