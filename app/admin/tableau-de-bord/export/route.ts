@@ -1,18 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getDashboardStats } from "@/lib/dashboard-data";
-
-const BOM = "﻿";
-
-function csvEscape(value: string | number): string {
-  const str = String(value);
-  if (/[",\n]/.test(str)) return `"${str.replace(/"/g, '""')}"`;
-  return str;
-}
-
-function csvRow(values: (string | number)[]): string {
-  return values.map(csvEscape).join(",");
-}
+import { toCsv } from "@/lib/csv-export";
 
 export async function GET() {
   const supabase = await createClient();
@@ -39,18 +28,15 @@ export async function GET() {
 
   const formatDate = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("fr-FR") : "");
 
-  const rows: string[] = [];
-  rows.push(
-    csvRow(["Type", "Nom", "Leçons terminées", "Devoirs rendus", "Cours créés", "Séances programmées", "Dernière activité"]),
-  );
-  for (const e of eleveStats) {
-    rows.push(csvRow(["Élève", e.nom, e.leconsTerminees, e.devoirsRendus, "", "", formatDate(e.derniereActivite)]));
-  }
-  for (const p of profStats) {
-    rows.push(csvRow(["Professeur", p.nom, "", "", p.coursCrees, p.seancesProgrammees, formatDate(p.derniereActivite)]));
-  }
+  const rows = [
+    ...eleveStats.map((e) => ["Élève", e.nom, e.leconsTerminees, e.devoirsRendus, "", "", formatDate(e.derniereActivite)]),
+    ...profStats.map((p) => ["Professeur", p.nom, "", "", p.coursCrees, p.seancesProgrammees, formatDate(p.derniereActivite)]),
+  ];
 
-  const csv = BOM + rows.join("\r\n");
+  const csv = toCsv(
+    ["Type", "Nom", "Leçons terminées", "Devoirs rendus", "Cours créés", "Séances programmées", "Dernière activité"],
+    rows,
+  );
 
   return new NextResponse(csv, {
     headers: {

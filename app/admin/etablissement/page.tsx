@@ -38,6 +38,21 @@ export default async function EtablissementSettingsPage() {
       <h1 className="mt-2 mb-6 text-2xl font-semibold text-gray-900">
         Personnaliser {tenant?.nom}
       </h1>
+
+      <section className="card-dashed mb-8 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium" style={{ color: "var(--ink)" }}>
+            Exporter toutes les données de l&apos;établissement
+          </p>
+          <p className="text-xs" style={{ color: "var(--ink-soft)" }}>
+            Comptes, cours, notes, présences, insertions, offres — une archive ZIP de fichiers CSV.
+          </p>
+        </div>
+        <a href="/admin/exporter-donnees" className="btn-secondary shrink-0">
+          Télécharger l&apos;export
+        </a>
+      </section>
+
       <BrandingForm
         currentLogoUrl={tenant?.logo_url ?? null}
         currentColor={tenant?.couleur_primaire ?? "#4f46e5"}
