@@ -33,6 +33,7 @@ export default function SeanceItem({
   const dateLabel = new Date(seance.date_heure).toLocaleString("fr-FR", {
     dateStyle: "medium",
     timeStyle: "short",
+    timeZone: "Africa/Abidjan",
   });
   const badge = monStatut ? STATUT_BADGE[monStatut] : null;
 

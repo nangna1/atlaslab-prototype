@@ -34,6 +34,7 @@ function GradingRow({
           {new Date(submission.submitted_at).toLocaleString("fr-FR", {
             dateStyle: "medium",
             timeStyle: "short",
+            timeZone: "Africa/Abidjan",
           })}
         </span>
       </div>
