@@ -4,13 +4,16 @@ import { useActionState, useState } from "react";
 import {
   updateAccountNom,
   toggleAccountActive,
+  setModerateur,
   type UpdateNomState,
   type ToggleActiveState,
+  type SetModerateurState,
 } from "./actions";
 import LoginAsButton from "./LoginAsButton";
 
 const nomInitialState: UpdateNomState = {};
 const toggleInitialState: ToggleActiveState = {};
+const moderateurInitialState: SetModerateurState = {};
 
 const ROLE_LABEL: Record<string, string> = {
   super_admin: "Super admin",
@@ -26,12 +29,22 @@ type Compte = {
   telephone: string | null;
   role: string;
   actif: boolean;
+  est_moderateur?: boolean;
 };
 
-export default function AccountRow({ compte, isSelf }: { compte: Compte; isSelf: boolean }) {
+export default function AccountRow({
+  compte,
+  isSelf,
+  isFullAdmin,
+}: {
+  compte: Compte;
+  isSelf: boolean;
+  isFullAdmin: boolean;
+}) {
   const [isEditing, setIsEditing] = useState(false);
   const [nomState, nomAction, nomPending] = useActionState(updateAccountNom, nomInitialState);
   const [toggleState, toggleAction] = useActionState(toggleAccountActive, toggleInitialState);
+  const [moderateurState, moderateurAction] = useActionState(setModerateur, moderateurInitialState);
   const [handledSuccess, setHandledSuccess] = useState(nomState.success);
 
   if (nomState.success !== handledSuccess) {
@@ -73,10 +86,22 @@ export default function AccountRow({ compte, isSelf }: { compte: Compte; isSelf:
       <span className={compte.actif ? "badge-success" : "badge-error"}>
         {compte.actif ? "Actif" : "Désactivé"}
       </span>
+      {isFullAdmin && compte.role === "professeur" && (
+        <form action={moderateurAction} className="shrink-0">
+          <input type="hidden" name="target_id" value={compte.id} />
+          <input type="hidden" name="value" value={String(!compte.est_moderateur)} />
+          <button type="submit" className="btn-link text-sm">
+            {compte.est_moderateur ? "Retirer modérateur" : "Rendre modérateur"}
+          </button>
+        </form>
+      )}
+      {compte.role === "professeur" && compte.est_moderateur && (
+        <span className="badge-muted">Modérateur</span>
+      )}
       <button type="button" onClick={() => setIsEditing(true)} className="btn-link shrink-0">
         Modifier
       </button>
-      {!isSelf && compte.role !== "super_admin" && compte.actif && (
+      {isFullAdmin && !isSelf && compte.role !== "super_admin" && compte.actif && (
         <LoginAsButton targetUserId={compte.id} targetNom={compte.nom} />
       )}
       {!isSelf && (
@@ -98,6 +123,7 @@ export default function AccountRow({ compte, isSelf }: { compte: Compte; isSelf:
         </form>
       )}
       {toggleState.error && <span className="text-sm text-red-600">{toggleState.error}</span>}
+      {moderateurState.error && <span className="text-sm text-red-600">{moderateurState.error}</span>}
     </div>
   );
 }

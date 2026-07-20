@@ -22,20 +22,26 @@ export default async function AdminPage({
 
   const { data: profile } = await supabase
     .from("users")
-    .select("role, tenant_id")
+    .select("role, tenant_id, est_moderateur")
     .eq("id", user.id)
     .single();
 
-  if (!profile || !["admin_tenant", "super_admin"].includes(profile.role)) {
+  const isFullAdmin = !!profile && ["admin_tenant", "super_admin"].includes(profile.role);
+  const isModerateur = !!profile && profile.role === "professeur" && profile.est_moderateur;
+
+  if (!profile || (!isFullAdmin && !isModerateur)) {
     redirect("/cours");
   }
 
   const VALID_ROLES = ["professeur", "apprenant", "admin_tenant"];
   let comptesQuery = supabase
     .from("users")
-    .select("id, nom, email, telephone, role, actif")
+    .select("id, nom, email, telephone, role, actif, est_moderateur")
     .order("nom");
-  if (roleFilter && VALID_ROLES.includes(roleFilter)) {
+  if (isModerateur) {
+    // Un moderateur ne gere que les eleves -- pas de filtre par role a proposer.
+    comptesQuery = comptesQuery.eq("role", "apprenant");
+  } else if (roleFilter && VALID_ROLES.includes(roleFilter)) {
     comptesQuery = comptesQuery.eq("role", roleFilter);
   }
   const { data: allComptes } = await comptesQuery;
@@ -45,22 +51,30 @@ export default async function AdminPage({
 
   return (
     <main className="page">
-      <AdminNav isSuperAdmin={profile.role === "super_admin"} />
-      <h1 className="mb-6 text-2xl font-semibold text-gray-900">Comptes</h1>
+      {isFullAdmin && <AdminNav isSuperAdmin={profile.role === "super_admin"} />}
+      <h1 className="mb-6 text-2xl font-semibold text-gray-900">
+        {isFullAdmin ? "Comptes" : "Mes élèves"}
+      </h1>
 
-      {profile.tenant_id && <OnboardingChecklist supabase={supabase} tenantId={profile.tenant_id} />}
+      {isFullAdmin && profile.tenant_id && (
+        <OnboardingChecklist supabase={supabase} tenantId={profile.tenant_id} />
+      )}
 
-      <section className="mb-10">
-        <h2 className="mb-3 text-lg font-semibold text-gray-900">Créer un compte</h2>
-        <CreateAccountForm />
-      </section>
+      {isFullAdmin && (
+        <>
+          <section className="mb-10">
+            <h2 className="mb-3 text-lg font-semibold text-gray-900">Créer un compte</h2>
+            <CreateAccountForm />
+          </section>
 
-      <section className="mb-10">
-        <ImportAccountsForm />
-      </section>
+          <section className="mb-10">
+            <ImportAccountsForm />
+          </section>
+        </>
+      )}
 
       <section>
-        <h2 className="mb-3 text-lg font-semibold text-gray-900">Comptes existants</h2>
+        {isFullAdmin && <h2 className="mb-3 text-lg font-semibold text-gray-900">Comptes existants</h2>}
         <form method="get" className="mb-4 flex flex-wrap gap-2">
           <input
             type="search"
@@ -69,12 +83,14 @@ export default async function AdminPage({
             placeholder="Rechercher un compte (nom, email)…"
             className="input max-w-sm"
           />
-          <select name="role" defaultValue={roleFilter ?? ""} className="input w-auto">
-            <option value="">Tous les rôles</option>
-            <option value="admin_tenant">Admin établissement</option>
-            <option value="professeur">Professeur</option>
-            <option value="apprenant">Apprenant</option>
-          </select>
+          {isFullAdmin && (
+            <select name="role" defaultValue={roleFilter ?? ""} className="input w-auto">
+              <option value="">Tous les rôles</option>
+              <option value="admin_tenant">Admin établissement</option>
+              <option value="professeur">Professeur</option>
+              <option value="apprenant">Apprenant</option>
+            </select>
+          )}
           <button type="submit" className="btn-secondary shrink-0">
             Filtrer
           </button>
@@ -86,7 +102,12 @@ export default async function AdminPage({
         )}
         <div className="flex flex-col gap-2">
           {(comptes ?? []).map((compte) => (
-            <AccountRow key={compte.id} compte={compte} isSelf={compte.id === user.id} />
+            <AccountRow
+              key={compte.id}
+              compte={compte}
+              isSelf={compte.id === user.id}
+              isFullAdmin={isFullAdmin}
+            />
           ))}
         </div>
       </section>

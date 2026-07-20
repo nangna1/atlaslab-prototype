@@ -31,12 +31,15 @@ export default async function CoursListPage({
 
   const { data: profile } = await supabase
     .from("users")
-    .select("role, tenant_id")
+    .select("role, tenant_id, est_moderateur")
     .eq("id", user.id)
     .single();
 
   const isApprenant = profile?.role === "apprenant";
   const isStaff = ["professeur", "admin_tenant", "super_admin"].includes(profile?.role ?? "");
+  const canManageComptes =
+    ["admin_tenant", "super_admin"].includes(profile?.role ?? "") ||
+    (profile?.role === "professeur" && profile.est_moderateur);
 
   const { data: tenant } = profile?.tenant_id
     ? await supabase
@@ -84,6 +87,11 @@ export default async function CoursListPage({
           </p>
         )}
         <div className="flex items-center gap-4">
+          {canManageComptes && (
+            <Link href="/admin" className="btn-link" style={{ color: "var(--ink-soft)" }}>
+              {profile?.role === "professeur" ? "Mes élèves" : "Comptes"}
+            </Link>
+          )}
           <Link href="/offres" className="btn-link" style={{ color: "var(--ink-soft)" }}>
             Offres
           </Link>

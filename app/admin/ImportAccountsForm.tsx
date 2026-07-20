@@ -22,6 +22,10 @@ export default function ImportAccountsForm() {
           mot_de_passe (optionnel, généré sinon), telephone (optionnel, active les alertes
           WhatsApp)
         </p>
+        <p className="mt-1 text-xs" style={{ color: "var(--ink-soft)" }}>
+          Un email de bienvenue avec les identifiants est envoyé automatiquement à chaque
+          compte créé.
+        </p>
       </div>
 
       <form action={formAction} className="flex flex-wrap items-center gap-2">

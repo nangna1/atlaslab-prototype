@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { parseAccountsCsv } from "@/lib/csv";
 import { logAudit } from "@/lib/audit";
+import { sendEmail } from "@/lib/email";
 
 export type ActionState = { error?: string; success?: boolean };
 
@@ -130,6 +131,11 @@ export async function importAccounts(
     return { error: `Trop de comptes dans le fichier (limite : ${MAX_IMPORT_ROWS}).` };
   }
 
+  const { data: tenant } = callerProfile.tenant_id
+    ? await supabase.from("tenants").select("nom").eq("id", callerProfile.tenant_id).single()
+    : { data: null };
+  const tenantNom = tenant?.nom ?? "AtlasLab";
+
   const admin = createAdminClient();
   const results: ImportAccountsResult[] = [];
 
@@ -166,6 +172,19 @@ export async function importAccounts(
     }
 
     results.push({ nom: row.nom, email: row.email, role: row.role, password });
+
+    await sendEmail({
+      to: row.email,
+      subject: `Votre compte ${tenantNom} sur AtlasLab est prêt`,
+      html: `<p>Bonjour ${row.nom},</p>
+        <p>Un compte a été créé pour vous sur AtlasLab, la plateforme de <strong>${tenantNom}</strong>.</p>
+        <p>Vos identifiants de connexion :</p>
+        <ul>
+          <li>Email : <strong>${row.email}</strong></li>
+          <li>Mot de passe temporaire : <strong>${password}</strong></li>
+        </ul>
+        <p>Connectez-vous sur <a href="https://atlaslabedu.com/login">atlaslabedu.com/login</a> puis changez ce mot de passe dès que possible (menu « Mon profil »).</p>`,
+    });
   }
 
   const created = results.filter((r) => !r.error);
@@ -206,19 +225,76 @@ async function requireAdmin() {
   return { supabase, caller, tenantId: callerProfile.tenant_id as string | null, error: null } as const;
 }
 
+// Un professeur avec est_moderateur=true peut gerer les comptes apprenant de
+// son etablissement, en plus de admin_tenant/super_admin. isFullAdmin
+// distingue les deux pour les actions qui touchent des comptes non-apprenant
+// (creation, professeur/admin, bypass RLS via createAdminClient) -- reservees
+// aux vrais admins.
+async function requireAdminOrModerator() {
+  const supabase = await createClient();
+  const {
+    data: { user: caller },
+  } = await supabase.auth.getUser();
+  if (!caller) {
+    return { supabase, caller: null, tenantId: null, isFullAdmin: false, error: "Non authentifié." } as const;
+  }
+
+  const { data: callerProfile } = await supabase
+    .from("users")
+    .select("role, tenant_id, est_moderateur")
+    .eq("id", caller.id)
+    .single();
+
+  const isFullAdmin = !!callerProfile && ["admin_tenant", "super_admin"].includes(callerProfile.role);
+  const isModerateur = !!callerProfile && callerProfile.role === "professeur" && callerProfile.est_moderateur;
+
+  if (!callerProfile || (!isFullAdmin && !isModerateur)) {
+    return { supabase, caller, tenantId: null, isFullAdmin: false, error: "Action réservée aux administrateurs." } as const;
+  }
+
+  return {
+    supabase,
+    caller,
+    tenantId: callerProfile.tenant_id as string | null,
+    isFullAdmin,
+    error: null,
+  } as const;
+}
+
+// Un moderateur ne peut agir que sur un compte apprenant de son propre
+// etablissement -- verifie explicitement ici car toggleAccountActive appelle
+// ensuite l'API admin Auth (createAdminClient), qui contourne entierement la
+// RLS de la table users.
+async function assertModeratorCanTarget(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  targetId: string,
+  tenantId: string | null,
+) {
+  const { data: target } = await supabase.from("users").select("role, tenant_id").eq("id", targetId).single();
+  if (!target || target.role !== "apprenant" || target.tenant_id !== tenantId) {
+    return "Vous ne pouvez gérer que les comptes élèves de votre établissement.";
+  }
+  return null;
+}
+
 export type UpdateNomState = { error?: string; success?: boolean };
 
 export async function updateAccountNom(
   _prevState: UpdateNomState,
   formData: FormData,
 ): Promise<UpdateNomState> {
-  const { supabase, caller, tenantId, error: authError } = await requireAdmin();
+  const { supabase, caller, tenantId, isFullAdmin, error: authError } = await requireAdminOrModerator();
   if (authError) return { error: authError };
 
   const targetId = String(formData.get("target_id") ?? "");
   const nom = String(formData.get("nom") ?? "").trim();
   const telephone = String(formData.get("telephone") ?? "").trim();
   if (!targetId || !nom) return { error: "Le nom est requis." };
+
+  if (!isFullAdmin) {
+    const moderatorError = await assertModeratorCanTarget(supabase, targetId, tenantId);
+    if (moderatorError) return { error: moderatorError };
+  }
 
   const { error } = await supabase
     .from("users")
@@ -245,7 +321,7 @@ export async function toggleAccountActive(
   _prevState: ToggleActiveState,
   formData: FormData,
 ): Promise<ToggleActiveState> {
-  const { supabase, caller, tenantId, error: authError } = await requireAdmin();
+  const { supabase, caller, tenantId, isFullAdmin, error: authError } = await requireAdminOrModerator();
   if (authError) return { error: authError };
 
   const targetId = String(formData.get("target_id") ?? "");
@@ -254,6 +330,11 @@ export async function toggleAccountActive(
 
   if (targetId === caller!.id) {
     return { error: "Vous ne pouvez pas désactiver votre propre compte." };
+  }
+
+  if (!isFullAdmin) {
+    const moderatorError = await assertModeratorCanTarget(supabase, targetId, tenantId);
+    if (moderatorError) return { error: moderatorError };
   }
 
   const admin = createAdminClient();
@@ -272,6 +353,39 @@ export async function toggleAccountActive(
     acteurId: caller!.id,
     tenantId,
     action: currentlyActif ? "compte_desactive" : "compte_reactive",
+    cibleType: "compte",
+    cibleId: targetId,
+  });
+
+  revalidatePath("/admin");
+  return {};
+}
+
+export type SetModerateurState = { error?: string };
+
+export async function setModerateur(
+  _prevState: SetModerateurState,
+  formData: FormData,
+): Promise<SetModerateurState> {
+  const { supabase, caller, tenantId, error: authError } = await requireAdmin();
+  if (authError) return { error: authError };
+
+  const targetId = String(formData.get("target_id") ?? "");
+  const value = formData.get("value") === "true";
+  if (!targetId) return { error: "Compte invalide." };
+
+  const { data: target } = await supabase.from("users").select("role").eq("id", targetId).single();
+  if (!target || target.role !== "professeur") {
+    return { error: "Le statut modérateur ne peut être accordé qu'à un professeur." };
+  }
+
+  const { error } = await supabase.from("users").update({ est_moderateur: value }).eq("id", targetId);
+  if (error) return { error: error.message };
+
+  await logAudit(supabase, {
+    acteurId: caller!.id,
+    tenantId,
+    action: value ? "moderateur_accorde" : "moderateur_retire",
     cibleType: "compte",
     cibleId: targetId,
   });
