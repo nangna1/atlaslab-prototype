@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { sendEmail } from "@/lib/email";
 import { sendWhatsAppTemplate } from "@/lib/whatsapp";
+import { generateJaasToken, jaasRoomName, isJaasConfigured } from "@/lib/jaas";
 
 async function requireStaff() {
   const supabase = await createClient();
@@ -511,4 +512,53 @@ export async function markAttendance(
 
   revalidatePath(`/cours/${courseId}`);
   return { success: true };
+}
+
+export type VideoTokenResult = { token: string; roomName: string; appId: string } | { error: string };
+
+// Genere un jeton JaaS (JWT) pour rejoindre une seance en tant que
+// moderateur (staff) ou participant simple. Le statut moderateur est
+// determine cote serveur a partir du role reel de l'appelant, jamais fait
+// confiance a une valeur venue du client. L'autorisation d'acces a la
+// seance elle-meme s'appuie sur la RLS de live_sessions (si le select
+// echoue, l'appelant n'a pas le droit de voir cette seance).
+export async function getVideoToken(seanceId: string): Promise<VideoTokenResult> {
+  if (!isJaasConfigured()) return { error: "Visio non configurée sur cette plateforme." };
+
+  const supabase = await createClient();
+  const {
+    data: { user: caller },
+  } = await supabase.auth.getUser();
+  if (!caller) return { error: "Non authentifié." };
+
+  const { data: seance } = await supabase
+    .from("live_sessions")
+    .select("id")
+    .eq("id", seanceId)
+    .single();
+  if (!seance) return { error: "Séance introuvable." };
+
+  const { data: callerProfile } = await supabase
+    .from("users")
+    .select("role, nom, email")
+    .eq("id", caller.id)
+    .single();
+  if (!callerProfile) return { error: "Profil introuvable." };
+
+  const moderator = ["professeur", "admin_tenant", "super_admin"].includes(callerProfile.role);
+
+  const token = generateJaasToken({
+    seanceId,
+    userId: caller.id,
+    nom: callerProfile.nom,
+    email: callerProfile.email,
+    moderator,
+  });
+  if (!token) return { error: "Visio non configurée sur cette plateforme." };
+
+  return {
+    token,
+    roomName: jaasRoomName(seanceId),
+    appId: process.env.JAAS_APP_ID!,
+  };
 }
