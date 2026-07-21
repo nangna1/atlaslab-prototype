@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { importCourse, generateCourseFromDocument, type ImportCourseState, type GenerateCourseState } from "./actions";
 import { COURSE_TEMPLATES } from "@/lib/course-templates";
@@ -46,7 +47,11 @@ export default function ImportCourseForm() {
         <p className="text-sm font-medium text-gray-700">Générer un cours avec l&apos;IA</p>
         <p className="mt-1 text-xs text-gray-500">
           À partir d&apos;un document déjà préparé (PDF ou Word .docx ou PowerPoint .pptx) — l&apos;IA le
-          découpe en modules et leçons. Résultat à relire et corriger après import.
+          découpe en modules et leçons. Résultat à relire et corriger après import.{" "}
+          <Link href="/cours/modele-import" className="text-indigo-600 hover:underline">
+            Voir un modèle de document à reproduire
+          </Link>
+          .
         </p>
       </div>
       <form action={genFormAction} className="flex flex-wrap items-center gap-2">
