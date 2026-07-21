@@ -130,6 +130,11 @@ export function decodeJwtPayload(accessToken: string): Record<string, unknown> {
 
 export async function cleanupAll(admin: SupabaseClient, state: CreatedState) {
   for (const tenantId of state.tenantIds) {
+    // paiements_frais.user_id/frais_id n'ont pas de cascade (voir
+    // 20260801000000_frais_scolarite.sql) : a supprimer avant users/frais_scolarite
+    // pour ne jamais violer de contrainte de cle etrangere ici.
+    await admin.from("paiements_frais").delete().eq("tenant_id", tenantId);
+    await admin.from("frais_scolarite").delete().eq("tenant_id", tenantId);
     await admin.from("courses").delete().eq("tenant_id", tenantId);
     await admin.from("enrollments").delete().eq("tenant_id", tenantId);
     await admin.from("users").delete().eq("tenant_id", tenantId);

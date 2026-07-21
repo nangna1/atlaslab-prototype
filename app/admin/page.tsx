@@ -51,7 +51,7 @@ export default async function AdminPage({
 
   return (
     <main className="page">
-      {isFullAdmin && <AdminNav isSuperAdmin={profile.role === "super_admin"} />}
+      {isFullAdmin && <AdminNav isSuperAdmin={profile.role === "super_admin"} canManageFinances={isFullAdmin} />}
       <h1 className="mb-6 text-2xl font-semibold text-gray-900">
         {isFullAdmin ? "Comptes" : "Mes élèves"}
       </h1>

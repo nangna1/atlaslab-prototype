@@ -3,7 +3,13 @@ import Link from "next/link";
 type NavLink = { href: string; label: string };
 type NavGroup = { label: string; links: NavLink[] };
 
-export default function AdminNav({ isSuperAdmin }: { isSuperAdmin: boolean }) {
+export default function AdminNav({
+  isSuperAdmin,
+  canManageFinances,
+}: {
+  isSuperAdmin: boolean;
+  canManageFinances: boolean;
+}) {
   const groups: NavGroup[] = [
     {
       label: "Pilotage",
@@ -21,6 +27,19 @@ export default function AdminNav({ isSuperAdmin }: { isSuperAdmin: boolean }) {
         { href: "/admin/offres", label: "Bourse aux stages/emplois" },
       ],
     },
+    // Donnees financieres reservees a admin_tenant/super_admin (voir
+    // app/admin/frais-scolarite/actions.ts) -- groupe masque au professeur.
+    ...(canManageFinances
+      ? [
+          {
+            label: "Finances",
+            links: [
+              { href: "/admin/frais-scolarite", label: "Frais de scolarité" },
+              { href: "/admin/paiements", label: "Paiements" },
+            ],
+          },
+        ]
+      : []),
     {
       label: "Établissement",
       links: [

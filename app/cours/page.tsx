@@ -95,6 +95,11 @@ export default async function CoursListPage({
           <Link href="/offres" className="btn-link" style={{ color: "var(--ink-soft)" }}>
             Offres
           </Link>
+          {isApprenant && (
+            <Link href="/mes-frais" className="btn-link" style={{ color: "var(--ink-soft)" }}>
+              Mes frais
+            </Link>
+          )}
           <Link href="/securite" className="btn-link" style={{ color: "var(--ink-soft)" }}>
             Sécurité
           </Link>
