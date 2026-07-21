@@ -31,6 +31,7 @@ export default function CreateAccountForm() {
         <select name="role" defaultValue="apprenant" className="input">
           <option value="professeur">Professeur</option>
           <option value="apprenant">Apprenant</option>
+          <option value="parent">Parent</option>
         </select>
       </label>
       {state.error && <p className="text-sm text-red-600">{state.error}</p>}

@@ -35,6 +35,10 @@ export default async function CoursListPage({
     .eq("id", user.id)
     .single();
 
+  // Cette page (creation/import de cours, liste "Mes cours"...) n'a pas de
+  // sens pour un parent -- son espace dedie est /portail-parent.
+  if (profile?.role === "parent") redirect("/portail-parent");
+
   const isApprenant = profile?.role === "apprenant";
   const isStaff = ["professeur", "admin_tenant", "super_admin"].includes(profile?.role ?? "");
   const canManageComptes =

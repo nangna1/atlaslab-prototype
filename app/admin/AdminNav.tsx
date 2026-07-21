@@ -25,6 +25,7 @@ export default function AdminNav({
       links: [
         { href: "/admin/insertion-professionnelle", label: "Insertion professionnelle" },
         { href: "/admin/offres", label: "Bourse aux stages/emplois" },
+        { href: "/admin/liens-parents", label: "Liens parents-élèves" },
       ],
     },
     // Donnees financieres reservees a admin_tenant/super_admin (voir

@@ -24,7 +24,18 @@ export default async function BulletinPage({
     .single();
   const isStaff = ["professeur", "admin_tenant", "super_admin"].includes(profile?.role ?? "");
 
-  if (!isStaff && user.id !== userId) redirect(`/cours/${courseId}`);
+  let isParentOfEleve = false;
+  if (profile?.role === "parent") {
+    const { data: lien } = await supabase
+      .from("parents_enfants")
+      .select("id")
+      .eq("parent_id", user.id)
+      .eq("enfant_id", userId)
+      .maybeSingle();
+    isParentOfEleve = !!lien;
+  }
+
+  if (!isStaff && !isParentOfEleve && user.id !== userId) redirect(`/cours/${courseId}`);
 
   const { data: course } = await supabase
     .from("courses")

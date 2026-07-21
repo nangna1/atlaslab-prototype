@@ -36,7 +36,7 @@ export async function createAccount(
   const password = String(formData.get("password") ?? "");
   const role = String(formData.get("role") ?? "");
 
-  if (!nom || !email || !password || !["professeur", "apprenant"].includes(role)) {
+  if (!nom || !email || !password || !["professeur", "apprenant", "parent"].includes(role)) {
     return { error: "Tous les champs sont requis." };
   }
 
