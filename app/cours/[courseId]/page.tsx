@@ -9,6 +9,8 @@ import LessonRow from "./LessonRow";
 import CourseHeader from "../CourseHeader";
 import SeanceForm from "./SeanceForm";
 import SeanceItem from "./SeanceItem";
+import CreneauForm from "./CreneauForm";
+import CreneauItem from "./CreneauItem";
 
 const TYPE_LABEL: Record<string, string> = {
   contenu: "📄 Contenu",
@@ -132,6 +134,13 @@ export default async function CoursDetailPage({
     candidats = (apprenants ?? []).filter((a) => !inscritIds.has(a.id));
   }
 
+  const { data: creneaux } = await supabase
+    .from("creneaux_horaires")
+    .select("id, jour, heure_debut, heure_fin, salle")
+    .eq("course_id", courseId)
+    .order("jour")
+    .order("heure_debut");
+
   const { data: seances } = await supabase
     .from("live_sessions")
     .select("id, date_heure, lien_visio")
@@ -225,6 +234,26 @@ export default async function CoursDetailPage({
           <AddModuleForm courseId={course.id} />
         </div>
       )}
+
+      <section className="mt-10">
+        <h2 className="mb-3 border-b border-gray-200 pb-2 text-lg font-semibold text-gray-900">
+          Emploi du temps
+        </h2>
+        {(creneaux ?? []).length === 0 ? (
+          <p className="text-sm text-gray-500">Aucun créneau défini.</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {(creneaux ?? []).map((creneau) => (
+              <CreneauItem key={creneau.id} courseId={course.id} creneau={creneau} isStaff={isStaff} />
+            ))}
+          </div>
+        )}
+        {isStaff && (
+          <div className="mt-3">
+            <CreneauForm courseId={course.id} />
+          </div>
+        )}
+      </section>
 
       <section className="mt-10">
         <h2 className="mb-3 border-b border-gray-200 pb-2 text-lg font-semibold text-gray-900">

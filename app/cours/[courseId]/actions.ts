@@ -562,3 +562,100 @@ export async function getVideoToken(seanceId: string): Promise<VideoTokenResult>
     appId: process.env.JAAS_APP_ID!,
   };
 }
+
+// ── Emploi du temps (creneaux horaires hebdomadaires recurrents) ────────────
+
+export type CreateCreneauState = { error?: string; success?: boolean; warning?: string };
+
+export async function createCreneau(
+  _prevState: CreateCreneauState,
+  formData: FormData,
+): Promise<CreateCreneauState> {
+  const supabase = await createClient();
+  const {
+    data: { user: caller },
+  } = await supabase.auth.getUser();
+  if (!caller) return { error: "Non authentifié." };
+
+  const { data: callerProfile } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", caller.id)
+    .single();
+
+  if (!callerProfile || !["professeur", "admin_tenant", "super_admin"].includes(callerProfile.role)) {
+    return { error: "Action réservée au staff." };
+  }
+
+  const courseId = String(formData.get("course_id") ?? "");
+  const jour = Number(formData.get("jour"));
+  const heureDebut = String(formData.get("heure_debut") ?? "");
+  const heureFin = String(formData.get("heure_fin") ?? "");
+  const salle = String(formData.get("salle") ?? "").trim();
+
+  if (!courseId || !Number.isInteger(jour) || jour < 0 || jour > 6 || !heureDebut || !heureFin) {
+    return { error: "Jour et horaires sont requis." };
+  }
+  if (heureDebut >= heureFin) {
+    return { error: "L'heure de fin doit être après l'heure de début." };
+  }
+
+  const { error } = await supabase.from("creneaux_horaires").insert({
+    course_id: courseId,
+    jour,
+    heure_debut: heureDebut,
+    heure_fin: heureFin,
+    salle: salle || null,
+  });
+
+  if (error) return { error: error.message };
+
+  // Avertissement (jamais bloquant, l'insertion ci-dessus est deja faite) :
+  // meme professeur ou meme salle sur un creneau chevauchant d'un AUTRE
+  // cours du tenant. Les creneaux du MEME cours ne sont jamais compares
+  // entre eux (ex: 2 groupes en parallele, volontaire).
+  const { data: course } = await supabase.from("courses").select("professeur_id, titre").eq("id", courseId).single();
+
+  const { data: autresCreneaux } = await supabase
+    .from("creneaux_horaires")
+    .select("heure_debut, heure_fin, salle, courses(titre, professeur_id)")
+    .eq("jour", jour)
+    .neq("course_id", courseId);
+
+  const conflits = (autresCreneaux ?? [])
+    .map((c) => ({ ...c, courses: c.courses as unknown as { titre: string; professeur_id: string | null } | null }))
+    .filter((c) => {
+      const chevauche = heureDebut < c.heure_fin && heureFin > c.heure_debut;
+      if (!chevauche) return false;
+      const memeProf = !!course?.professeur_id && c.courses?.professeur_id === course.professeur_id;
+      const memeSalle = !!salle && !!c.salle && c.salle.trim().toLowerCase() === salle.toLowerCase();
+      return memeProf || memeSalle;
+    });
+
+  revalidatePath(`/cours/${courseId}`);
+  revalidatePath("/emploi-du-temps");
+
+  if (conflits.length > 0) {
+    const noms = [...new Set(conflits.map((c) => c.courses?.titre).filter(Boolean))];
+    return {
+      success: true,
+      warning: `Créneau ajouté, mais il chevauche un créneau existant (même professeur ou même salle) sur : ${noms.join(", ")}.`,
+    };
+  }
+
+  return { success: true };
+}
+
+export async function deleteCreneau(formData: FormData): Promise<void> {
+  const { supabase, error: authError } = await requireStaff();
+  if (authError) return;
+
+  const courseId = String(formData.get("course_id") ?? "");
+  const creneauId = String(formData.get("creneau_id") ?? "");
+  if (!courseId || !creneauId) return;
+
+  await supabase.from("creneaux_horaires").delete().eq("id", creneauId);
+
+  revalidatePath(`/cours/${courseId}`);
+  revalidatePath("/emploi-du-temps");
+}
