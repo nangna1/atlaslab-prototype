@@ -139,9 +139,12 @@ async function notifyMatchingEleves({
       });
     }
     if (e.telephone) {
+      // "_v2" : voir le commentaire equivalent dans
+      // app/admin/decrochage/actions.ts (meme incident de suppression cote
+      // Meta Business Manager, meme republication en categorie Utilitaire).
       await sendWhatsAppTemplate({
         to: e.telephone,
-        templateName: "atlaslab_nouvelle_offre",
+        templateName: "atlaslab_nouvelle_offre_v2",
         bodyParams: [entreprise, titre],
       });
     }

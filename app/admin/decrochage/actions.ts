@@ -54,9 +54,14 @@ export async function relancerEleve(
     sent = true;
   }
   if (target.telephone) {
+    // "_v2" : le nom d'origine (atlaslab_relance_decrochage) a ete supprime
+    // par erreur cote Meta Business Manager (tentative de correction de
+    // categorie Marketing -> Utilitaire) ; Meta bloque 4 semaines la
+    // recreation d'un nom de template supprime, republie donc sous ce
+    // nouveau nom en categorie Utilitaire des le depart.
     await sendWhatsAppTemplate({
       to: target.telephone,
-      templateName: "atlaslab_relance_decrochage",
+      templateName: "atlaslab_relance_decrochage_v2",
       bodyParams: [target.nom],
     });
     sent = true;
