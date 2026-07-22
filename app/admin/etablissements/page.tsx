@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import CreateTenantForm from "./CreateTenantForm";
 import TenantApprovalActions from "./TenantApprovalActions";
+import TenantPlanForm from "./TenantPlanForm";
+import { getLimiteEssai } from "@/lib/tenant-plan";
 
 export default async function EtablissementsPage() {
   const supabase = await createClient();
@@ -68,17 +70,28 @@ export default async function EtablissementsPage() {
       <section>
         <h2 className="mb-3 text-lg font-semibold text-gray-900">Établissements existants</h2>
         <div className="flex flex-col gap-2">
-          {others.map((tenant) => (
-            <div
-              key={tenant.id}
-              className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3"
-            >
-              <span className="text-gray-900">{tenant.nom}</span>
-              <span className="text-sm text-gray-500">{tenant.slug}</span>
-              <span className="badge-muted">{tenant.plan}</span>
-              {tenant.statut === "refuse" && <span className="badge-error">Refusé</span>}
-            </div>
-          ))}
+          {await Promise.all(
+            others.map(async (tenant) => {
+              const limite = tenant.plan === "essai" ? await getLimiteEssai(supabase, tenant.id) : null;
+              return (
+                <div
+                  key={tenant.id}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white p-3"
+                >
+                  <span className="text-gray-900">{tenant.nom}</span>
+                  <span className="text-sm text-gray-500">{tenant.slug}</span>
+                  <span className="badge-muted">{tenant.plan}</span>
+                  {limite && (
+                    <span className={`text-sm ${limite.limiteAtteinte ? "text-red-600" : "text-gray-500"}`}>
+                      {limite.nbComptes}/30 comptes — {limite.joursRestants} j restants
+                    </span>
+                  )}
+                  {tenant.statut === "refuse" && <span className="badge-error">Refusé</span>}
+                  <TenantPlanForm tenantId={tenant.id} plan={tenant.plan} />
+                </div>
+              );
+            }),
+          )}
         </div>
       </section>
     </main>

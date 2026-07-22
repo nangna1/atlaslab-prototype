@@ -130,6 +130,13 @@ export function decodeJwtPayload(accessToken: string): Record<string, unknown> {
 
 export async function cleanupAll(admin: SupabaseClient, state: CreatedState) {
   for (const tenantId of state.tenantIds) {
+    // audit_log.acteur_id n'a pas de cascade : un test qui appelle une VRAIE
+    // server action (logAudit) plutot qu'un insert direct laisserait sinon
+    // des lignes bloquant la suppression de users/tenants plus bas -- verifie
+    // en conditions reelles le 2026-07-21 (verification manuelle Playwright
+    // du module frais-scolarite, tenant reste orphelin plusieurs jours car
+    // le script de nettoyage de l'epoque ne verifiait pas les erreurs).
+    await admin.from("audit_log").delete().eq("tenant_id", tenantId);
     // paiements_frais.user_id/frais_id et parents_enfants.parent_id/enfant_id
     // n'ont pas de cascade (voir 20260801000000_frais_scolarite.sql et
     // 20260802000000_portail_parents.sql) : a supprimer avant users/frais_scolarite

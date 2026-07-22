@@ -6,6 +6,7 @@ import AccountRow from "./AccountRow";
 import OnboardingChecklist from "./OnboardingChecklist";
 import AdminNav from "./AdminNav";
 import { matchesQuery } from "@/lib/search";
+import { getLimiteEssai } from "@/lib/tenant-plan";
 
 export default async function AdminPage({
   searchParams,
@@ -49,12 +50,28 @@ export default async function AdminPage({
     ? (allComptes ?? []).filter((c) => matchesQuery(c.nom, q) || matchesQuery(c.email, q))
     : allComptes;
 
+  const limiteEssai = profile.role === "admin_tenant" ? await getLimiteEssai(supabase, profile.tenant_id) : null;
+
   return (
     <main className="page">
       {isFullAdmin && <AdminNav isSuperAdmin={profile.role === "super_admin"} canManageFinances={isFullAdmin} />}
       <h1 className="mb-6 text-2xl font-semibold text-gray-900">
         {isFullAdmin ? "Comptes" : "Mes élèves"}
       </h1>
+
+      {limiteEssai && (
+        <div
+          className={`mb-6 rounded-lg border p-3 text-sm ${
+            limiteEssai.limiteAtteinte
+              ? "border-red-300 bg-red-50 text-red-700"
+              : "border-amber-300 bg-amber-50 text-amber-700"
+          }`}
+        >
+          {limiteEssai.limiteAtteinte
+            ? "Période d'essai terminée ou limite de comptes atteinte : impossible de créer de nouveaux comptes apprenant/professeur. Contactez AtlasLab pour passer à un plan payant."
+            : `Période d'essai : ${limiteEssai.nbComptes}/30 comptes utilisés, ${limiteEssai.joursRestants} jour(s) restant(s).`}
+        </div>
+      )}
 
       {isFullAdmin && profile.tenant_id && (
         <OnboardingChecklist supabase={supabase} tenantId={profile.tenant_id} />

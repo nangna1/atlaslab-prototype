@@ -144,6 +144,42 @@ export async function approveTenant(
   return {};
 }
 
+export type ChangerPlanState = { error?: string };
+
+// Aucun moyen de paiement en ligne pour l'instant (voir README) : un
+// etablissement passe de 'essai' (limite a 30 jours / 30 comptes, voir
+// supabase/migrations/20260804000000_tenant_essai_limites.sql) a 'standard'
+// (illimite) uniquement via cette action manuelle d'un super_admin.
+export async function changerPlan(
+  _prevState: ChangerPlanState,
+  formData: FormData,
+): Promise<ChangerPlanState> {
+  const { supabase, caller, error: authError } = await requireSuperAdmin();
+  if (authError) return { error: authError };
+
+  const tenantId = String(formData.get("tenant_id") ?? "");
+  const plan = String(formData.get("plan") ?? "");
+  if (!tenantId || !["essai", "standard"].includes(plan)) {
+    return { error: "Établissement ou plan invalide." };
+  }
+
+  const admin = createAdminClient();
+  const { error } = await admin.from("tenants").update({ plan }).eq("id", tenantId);
+  if (error) return { error: error.message };
+
+  await logAudit(supabase, {
+    acteurId: caller!.id,
+    tenantId,
+    action: "plan_change",
+    cibleType: "tenant",
+    cibleId: tenantId,
+    details: { plan },
+  });
+
+  revalidatePath("/admin/etablissements");
+  return {};
+}
+
 export async function rejectTenant(
   _prevState: TenantApprovalState,
   formData: FormData,

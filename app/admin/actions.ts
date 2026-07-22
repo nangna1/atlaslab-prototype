@@ -7,6 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { parseAccountsCsv } from "@/lib/csv";
 import { logAudit } from "@/lib/audit";
 import { sendEmail } from "@/lib/email";
+import { verifierLimiteEssaiPourNouveauCompte, getLimiteEssai, DUREE_ESSAI_JOURS, LIMITE_COMPTES_ESSAI } from "@/lib/tenant-plan";
 
 export type ActionState = { error?: string; success?: boolean };
 
@@ -39,6 +40,9 @@ export async function createAccount(
   if (!nom || !email || !password || !["professeur", "apprenant", "parent"].includes(role)) {
     return { error: "Tous les champs sont requis." };
   }
+
+  const limiteMessage = await verifierLimiteEssaiPourNouveauCompte(supabase, callerProfile.tenant_id, role);
+  if (limiteMessage) return { error: limiteMessage };
 
   const admin = createAdminClient();
   const { data: created, error: createError } = await admin.auth.admin.createUser({
@@ -139,7 +143,37 @@ export async function importAccounts(
   const admin = createAdminClient();
   const results: ImportAccountsResult[] = [];
 
+  // Limite du plan 'essai' (voir lib/tenant-plan.ts) : verifiee UNE FOIS ici
+  // (pas par ligne, pour ne pas multiplier les requetes sur un import de
+  // jusqu'a 300 lignes), puis decrementee localement au fil des insertions
+  // reussies. La vraie barriere reste la RLS (20260804000000_tenant_essai_limites.sql)
+  // si ce compteur local divergeait pour une raison quelconque.
+  const limiteEssai = await getLimiteEssai(supabase, callerProfile.tenant_id);
+  const essaiExpire = !!limiteEssai && limiteEssai.joursEcoules >= DUREE_ESSAI_JOURS;
+  let comptesRestants = limiteEssai ? Math.max(0, LIMITE_COMPTES_ESSAI - limiteEssai.nbComptes) : Infinity;
+
   for (const row of rows) {
+    if (["apprenant", "professeur"].includes(row.role)) {
+      if (essaiExpire) {
+        results.push({
+          nom: row.nom,
+          email: row.email,
+          role: row.role,
+          error: `Période d'essai de ${DUREE_ESSAI_JOURS} jours terminée. Contactez AtlasLab pour passer à un plan payant.`,
+        });
+        continue;
+      }
+      if (comptesRestants <= 0) {
+        results.push({
+          nom: row.nom,
+          email: row.email,
+          role: row.role,
+          error: `Limite de ${LIMITE_COMPTES_ESSAI} comptes atteinte pour la période d'essai. Contactez AtlasLab pour passer à un plan payant.`,
+        });
+        continue;
+      }
+    }
+
     const password = row.motDePasse ?? generatePassword();
     const { data: created, error: createError } = await admin.auth.admin.createUser({
       email: row.email,
@@ -172,6 +206,7 @@ export async function importAccounts(
     }
 
     results.push({ nom: row.nom, email: row.email, role: row.role, password });
+    if (["apprenant", "professeur"].includes(row.role)) comptesRestants--;
 
     await sendEmail({
       to: row.email,
