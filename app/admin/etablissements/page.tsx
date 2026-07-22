@@ -5,8 +5,15 @@ import CreateTenantForm from "./CreateTenantForm";
 import TenantApprovalActions from "./TenantApprovalActions";
 import TenantPlanForm from "./TenantPlanForm";
 import { getLimiteEssai } from "@/lib/tenant-plan";
+import { matchesQuery } from "@/lib/search";
 
-export default async function EtablissementsPage() {
+export default async function EtablissementsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q: qRaw } = await searchParams;
+  const q = (qRaw ?? "").trim();
   const supabase = await createClient();
   const {
     data: { user },
@@ -29,7 +36,10 @@ export default async function EtablissementsPage() {
     .order("created_at");
 
   const pending = (allTenants ?? []).filter((t) => t.statut === "en_attente");
-  const others = (allTenants ?? []).filter((t) => t.statut !== "en_attente");
+  const othersAll = (allTenants ?? []).filter((t) => t.statut !== "en_attente");
+  const others = q
+    ? othersAll.filter((t) => matchesQuery(t.nom, q) || matchesQuery(t.slug, q))
+    : othersAll;
 
   return (
     <main className="page">
@@ -69,6 +79,23 @@ export default async function EtablissementsPage() {
 
       <section>
         <h2 className="mb-3 text-lg font-semibold text-gray-900">Établissements existants</h2>
+        <form method="get" className="mb-4 flex flex-wrap gap-2">
+          <input
+            type="search"
+            name="q"
+            defaultValue={q}
+            placeholder="Rechercher un établissement (nom, identifiant)…"
+            className="input max-w-sm"
+          />
+          <button type="submit" className="btn-secondary shrink-0">
+            Filtrer
+          </button>
+        </form>
+        {others.length === 0 && (
+          <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
+            Aucun établissement ne correspond à ces critères.
+          </p>
+        )}
         <div className="flex flex-col gap-2">
           {await Promise.all(
             others.map(async (tenant) => {

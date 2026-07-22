@@ -3,9 +3,16 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getFraisStats } from "@/lib/frais-data";
 import { formatMontantCFA } from "@/lib/format";
+import { matchesQuery } from "@/lib/search";
 import RelanceButton from "./RelanceButton";
 
-export default async function PaiementsPage() {
+export default async function PaiementsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q: qRaw } = await searchParams;
+  const q = (qRaw ?? "").trim();
   const supabase = await createClient();
   const {
     data: { user },
@@ -26,7 +33,8 @@ export default async function PaiementsPage() {
     redirect("/admin");
   }
 
-  const stats = (await getFraisStats(supabase)).sort((a, b) => b.solde - a.solde);
+  const statsAll = (await getFraisStats(supabase)).sort((a, b) => b.solde - a.solde);
+  const stats = q ? statsAll.filter((e) => matchesQuery(e.nom, q)) : statsAll;
 
   return (
     <main className="page">
@@ -43,8 +51,23 @@ export default async function PaiementsPage() {
         .
       </p>
 
+      <form method="get" className="mb-4 flex flex-wrap gap-2">
+        <input
+          type="search"
+          name="q"
+          defaultValue={q}
+          placeholder="Rechercher un élève (nom)…"
+          className="input max-w-sm"
+        />
+        <button type="submit" className="btn-secondary shrink-0">
+          Filtrer
+        </button>
+      </form>
+
       {stats.length === 0 ? (
-        <p className="text-sm text-gray-500">Aucun élève dans cet établissement.</p>
+        <p className="text-sm text-gray-500">
+          {q ? "Aucun élève ne correspond à ces critères." : "Aucun élève dans cet établissement."}
+        </p>
       ) : (
         <div className="flex flex-col gap-2">
           {stats.map((e) => (
