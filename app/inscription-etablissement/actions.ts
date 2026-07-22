@@ -1,8 +1,10 @@
 "use server";
 
+import { headers } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail } from "@/lib/email";
 import { logAudit } from "@/lib/audit";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export type SignupTenantState = { error?: string; success?: boolean };
 
@@ -33,6 +35,21 @@ export async function signupTenant(
   if (!slug) return { error: "Identifiant invalide." };
 
   const admin = createAdminClient();
+
+  // Point d'entree public sans authentification : cree un vrai tenant + un
+  // vrai compte auth.users + un email a tous les super_admins a CHAQUE appel
+  // (voir plus bas) -- limite obligatoire par IP ET par email avant toute
+  // ecriture, sinon abusable pour epuiser le quota Auth Supabase ou spammer
+  // les boites mail des super_admins.
+  const ip = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const okIp = await checkRateLimit(admin, `signup-etablissement:ip:${ip}`, { max: 3, fenetreMinutes: 60 });
+  const okEmail = await checkRateLimit(admin, `signup-etablissement:email:${adminEmail.toLowerCase()}`, {
+    max: 3,
+    fenetreMinutes: 60,
+  });
+  if (!okIp || !okEmail) {
+    return { error: "Trop de tentatives, réessayez plus tard." };
+  }
 
   const { data: tenant, error: tenantError } = await admin
     .from("tenants")
