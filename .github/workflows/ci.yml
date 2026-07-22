@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Type-check
+        run: npx tsc --noEmit -p tsconfig.json
+
+      # "npm run lint" volontairement absent ici : 7 erreurs pre-existantes
+      # (react-hooks/purity, react-hooks/set-state-in-effect) rendraient la CI
+      # rouge des le premier run, sans rapport avec ce qui est verifie ici. A
+      # ajouter une fois ces erreurs corrigees separement.
+
+      # Tests d'integration reels contre le projet Supabase de dev (pas de
+      # stack Supabase locale, voir tests/setup.ts) : les secrets ci-dessous
+      # doivent etre configures dans Settings > Secrets and variables >
+      # Actions du depot GitHub, avec les memes valeurs que .env.local.
+      - name: Tests (RLS multi-tenant)
+        run: npm test
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

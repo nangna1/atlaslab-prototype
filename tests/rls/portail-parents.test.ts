@@ -92,7 +92,6 @@ describe("Portail parents : accès en lecture seule scopé à l'enfant lié", ()
   const state = newState();
 
   let tenant: TestTenant;
-  let adminTenant: TestUser;
   let professeur: TestUser;
   let parent: TestUser;
   let enfant: TestUser;
@@ -103,7 +102,6 @@ describe("Portail parents : accès en lecture seule scopé à l'enfant lié", ()
 
   beforeAll(async () => {
     tenant = await createTestTenant(admin, state, "portailparent");
-    adminTenant = await createTestUser(admin, state, { tenantId: tenant.id, role: "admin_tenant" });
     professeur = await createTestUser(admin, state, { tenantId: tenant.id, role: "professeur" });
     parent = await createTestUser(admin, state, { tenantId: tenant.id, role: "parent" });
     enfant = await createTestUser(admin, state, { tenantId: tenant.id, role: "apprenant" });
