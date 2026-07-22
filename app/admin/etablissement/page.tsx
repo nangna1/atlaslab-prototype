@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { hasTenantCinetPayConfig } from "@/lib/tenant-cinetpay";
 import BrandingForm from "./BrandingForm";
+import PaiementGatewayForm from "./PaiementGatewayForm";
 
 export default async function EtablissementSettingsPage() {
   const supabase = await createClient();
@@ -29,6 +32,8 @@ export default async function EtablissementSettingsPage() {
     .select("nom, logo_url, couleur_primaire, adresse, numero_agrement, representant_legal, certificat_modele")
     .eq("id", profile.tenant_id)
     .single();
+
+  const paiementConfigure = await hasTenantCinetPayConfig(createAdminClient(), profile.tenant_id);
 
   return (
     <main className="page">
@@ -61,6 +66,10 @@ export default async function EtablissementSettingsPage() {
         currentRepresentantLegal={tenant?.representant_legal ?? ""}
         currentCertificatModele={tenant?.certificat_modele ?? "classique"}
       />
+
+      <div className="mt-8">
+        <PaiementGatewayForm configured={paiementConfigure} />
+      </div>
     </main>
   );
 }

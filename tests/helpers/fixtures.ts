@@ -141,8 +141,15 @@ export async function cleanupAll(admin: SupabaseClient, state: CreatedState) {
     // n'ont pas de cascade (voir 20260801000000_frais_scolarite.sql et
     // 20260802000000_portail_parents.sql) : a supprimer avant users/frais_scolarite
     // pour ne jamais violer de contrainte de cle etrangere ici.
+    // paiements_frais_transactions reference frais_scolarite/users/paiements_frais
+    // (voir 20260805000000_paiement_en_ligne_cinetpay.sql) : a supprimer avant
+    // paiements_frais/frais_scolarite pour la meme raison.
+    await admin.from("paiements_frais_transactions").delete().eq("tenant_id", tenantId);
     await admin.from("paiements_frais").delete().eq("tenant_id", tenantId);
     await admin.from("frais_scolarite").delete().eq("tenant_id", tenantId);
+    // tenant_paiement_config reference tenants sans cascade (voir
+    // 20260806000000_tenant_paiement_config.sql).
+    await admin.from("tenant_paiement_config").delete().eq("tenant_id", tenantId);
     await admin.from("parents_enfants").delete().eq("tenant_id", tenantId);
     await admin.from("courses").delete().eq("tenant_id", tenantId);
     await admin.from("enrollments").delete().eq("tenant_id", tenantId);

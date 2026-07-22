@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getFraisApplicablesPourEleve } from "@/lib/frais-data";
 import { formatMontantCFA } from "@/lib/format";
+import { hasTenantCinetPayConfig } from "@/lib/tenant-cinetpay";
+import PaierEnLigneButton from "./PaierEnLigneButton";
 
 export default async function MesFraisPage() {
   const supabase = await createClient();
@@ -11,6 +14,10 @@ export default async function MesFraisPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  const { data: profile } = await supabase.from("users").select("tenant_id").eq("id", user.id).single();
+  const paiementEnLigneDisponible = profile?.tenant_id
+    ? await hasTenantCinetPayConfig(createAdminClient(), profile.tenant_id)
+    : false;
   const fraisApplicables = await getFraisApplicablesPourEleve(supabase, user.id);
   const solde = fraisApplicables.reduce((sum, f) => sum + f.reste, 0);
 
@@ -43,10 +50,13 @@ export default async function MesFraisPage() {
                 className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white p-3"
               >
                 <span className="font-medium text-gray-900">{f.libelle}</span>
-                <span className="text-sm text-gray-600">
-                  {formatMontantCFA(f.paye)} payé / {formatMontantCFA(f.montant)}
-                  {f.reste > 0 ? ` — reste ${formatMontantCFA(f.reste)}` : " — soldé"}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-600">
+                    {formatMontantCFA(f.paye)} payé / {formatMontantCFA(f.montant)}
+                    {f.reste > 0 ? ` — reste ${formatMontantCFA(f.reste)}` : " — soldé"}
+                  </span>
+                  {f.reste > 0 && paiementEnLigneDisponible && <PaierEnLigneButton fraisId={f.id} />}
+                </div>
               </div>
             ))}
           </div>
