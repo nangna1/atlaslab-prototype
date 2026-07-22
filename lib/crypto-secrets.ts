@@ -7,7 +7,10 @@ import crypto from "node:crypto";
 // echec silencieux masquerait un vrai risque (stockage en clair par erreur,
 // ou impossibilite de dechiffrer des identifiants deja enregistres).
 function getKey(): Buffer {
-  const hex = process.env.TENANT_SECRETS_ENCRYPTION_KEY;
+  // .trim() : un espace ou saut de ligne parasite est facile a introduire en
+  // collant cette valeur dans un champ de secret (GitHub Actions, Vercel...),
+  // sans consequence sur la securite du chiffrement lui-meme.
+  const hex = process.env.TENANT_SECRETS_ENCRYPTION_KEY?.trim();
   if (!hex || hex.length !== 64) {
     throw new Error(
       "TENANT_SECRETS_ENCRYPTION_KEY manquante ou invalide (attendu : 64 caractères hex, 32 octets).",

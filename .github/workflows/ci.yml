@@ -25,14 +25,6 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      # DEBUG TEMPORAIRE : affiche uniquement la longueur du secret (jamais
-      # sa valeur) pour diagnostiquer pourquoi lib/crypto-secrets.ts le
-      # rejette encore comme "invalide" -- a retirer une fois resolu.
-      - name: DEBUG longueur TENANT_SECRETS_ENCRYPTION_KEY
-        run: echo "Longueur = ${#KEY}"
-        env:
-          KEY: ${{ secrets.TENANT_SECRETS_ENCRYPTION_KEY }}
-
       # Tests d'integration reels contre le projet Supabase de dev (pas de
       # stack Supabase locale, voir tests/setup.ts) : les secrets ci-dessous
       # doivent etre configures dans Settings > Secrets and variables >
