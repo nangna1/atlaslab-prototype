@@ -6,6 +6,9 @@ export default function OfflineStatusBanner() {
   const [isOffline, setIsOffline] = useState(false);
 
   useEffect(() => {
+    // navigator.onLine n'existe pas cote serveur (SSR) : impossible de
+    // calculer cette valeur autrement qu'apres montage cote client.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsOffline(!navigator.onLine);
     const goOnline = () => setIsOffline(false);
     const goOffline = () => setIsOffline(true);

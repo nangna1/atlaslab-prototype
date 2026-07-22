@@ -35,6 +35,10 @@ export default async function DecrochagePage({
   }
 
   const { eleveStats } = await getDashboardStats(supabase);
+  // Composant serveur execute une fois par requete (donnees dynamiques, pas de
+  // prerendering statique) : pas de re-render memoise a proteger ici,
+  // contrairement au cas client vise par cette regle.
+  // eslint-disable-next-line react-hooks/purity
   const now = Date.now();
 
   const enrichis = eleveStats.map((e) => ({
@@ -88,7 +92,7 @@ export default async function DecrochagePage({
               <span className="text-sm text-gray-600">
                 {e.jours === null ? "Jamais actif" : `Inactif depuis ${e.jours} jour${e.jours > 1 ? "s" : ""}`}
               </span>
-              <RelanceButton userId={e.id} userNom={e.nom} />
+              <RelanceButton userId={e.id} />
             </div>
           ))}
         </div>

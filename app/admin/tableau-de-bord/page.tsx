@@ -119,9 +119,14 @@ export default async function TableauDeBordPage() {
   const formatDate = (iso: string | null) =>
     iso ? new Date(iso).toLocaleDateString("fr-FR", { dateStyle: "medium" }) : "—";
 
+  // Composant serveur execute une fois par requete (donnees dynamiques, pas de
+  // prerendering statique) : pas de re-render memoise a proteger ici,
+  // contrairement au cas client vise par cette regle.
+  // eslint-disable-next-line react-hooks/purity
+  const maintenant = Date.now();
   const aRisqueCount = eleveStats.filter((e) => {
     if (!e.derniereActivite) return true;
-    const jours = Math.floor((Date.now() - new Date(e.derniereActivite).getTime()) / (1000 * 60 * 60 * 24));
+    const jours = Math.floor((maintenant - new Date(e.derniereActivite).getTime()) / (1000 * 60 * 60 * 24));
     return jours >= 7;
   }).length;
 

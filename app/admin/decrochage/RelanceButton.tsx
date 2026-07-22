@@ -5,7 +5,7 @@ import { relancerEleve, type RelanceState } from "./actions";
 
 const initialState: RelanceState = {};
 
-export default function RelanceButton({ userId, userNom }: { userId: string; userNom: string }) {
+export default function RelanceButton({ userId }: { userId: string }) {
   const [state, formAction, pending] = useActionState(relancerEleve, initialState);
 
   return (

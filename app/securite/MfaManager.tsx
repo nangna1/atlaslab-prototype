@@ -22,6 +22,9 @@ export default function MfaManager() {
   }
 
   useEffect(() => {
+    // Charge l'etat MFA depuis Supabase au montage : aucune alternative sans
+    // effet (donnee externe non disponible avant le premier rendu).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

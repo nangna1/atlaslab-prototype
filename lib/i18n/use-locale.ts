@@ -13,6 +13,9 @@ function readCookieLocale(): Locale {
 export function useLocale(): Locale {
   const [locale, setLocale] = useState<Locale>(DEFAULT_LOCALE);
   useEffect(() => {
+    // document.cookie n'existe pas cote serveur (SSR) : impossible de
+    // calculer cette valeur autrement qu'apres montage cote client.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocale(readCookieLocale());
   }, []);
   return locale;

@@ -7,6 +7,9 @@ export default function DemoReturnBanner() {
   const [returnLink, setReturnLink] = useState<string | null>(null);
 
   useEffect(() => {
+    // sessionStorage n'existe pas cote serveur (SSR) : impossible de calculer
+    // cette valeur autrement qu'apres montage cote client.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setReturnLink(sessionStorage.getItem(DEMO_RETURN_LINK_KEY));
   }, []);
 

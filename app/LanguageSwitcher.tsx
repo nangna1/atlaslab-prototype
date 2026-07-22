@@ -7,6 +7,10 @@ export default function LanguageSwitcher() {
   const locale = useLocale();
 
   function change(next: Locale) {
+    // Appelee uniquement depuis onClick (jamais pendant le rendu) : l'ecriture
+    // sur document.cookie ici est sans risque, mais l'analyse statique du
+    // lint ne distingue pas "rendu" de "gestionnaire d'evenement".
+    // eslint-disable-next-line react-hooks/immutability
     document.cookie = `locale=${next}; path=/; max-age=31536000`;
     window.location.reload();
   }

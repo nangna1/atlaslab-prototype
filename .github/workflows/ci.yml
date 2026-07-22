@@ -22,10 +22,8 @@ jobs:
       - name: Type-check
         run: npx tsc --noEmit -p tsconfig.json
 
-      # "npm run lint" volontairement absent ici : 7 erreurs pre-existantes
-      # (react-hooks/purity, react-hooks/set-state-in-effect) rendraient la CI
-      # rouge des le premier run, sans rapport avec ce qui est verifie ici. A
-      # ajouter une fois ces erreurs corrigees separement.
+      - name: Lint
+        run: npm run lint
 
       # Tests d'integration reels contre le projet Supabase de dev (pas de
       # stack Supabase locale, voir tests/setup.ts) : les secrets ci-dessous
