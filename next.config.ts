@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   // pdf-parse -> pdfjs-dist charge @napi-rs/canvas (binaire natif specifique
@@ -16,4 +17,13 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Pas de token d'authentification Sentry configure pour ce pilote (upload de
+// source maps desactive, voir sourcemaps.disable) : evite de bloquer le
+// build en son absence, quitte a avoir des stack traces minifiees dans
+// Sentry pour l'instant.
+export default withSentryConfig(nextConfig, {
+  org: "atlaslab",
+  project: "atlaslab-prototype",
+  silent: !process.env.CI,
+  sourcemaps: { disable: true },
+});
