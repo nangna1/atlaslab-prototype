@@ -137,8 +137,14 @@ describe("Limite d'essai : 30 comptes atteints bloque un 31e, plan standard n'a 
   }, 60000);
 
   afterAll(async () => {
+    // Meme volume de travail que beforeAll ci-dessus (30 comptes crees, donc
+    // ~30 appels reseau sequentiels rien que pour auth.admin.deleteUser dans
+    // cleanupAll) - sans timeout explicite ici, ce hook heritait du
+    // hookTimeout par defaut (20000ms, vitest.config.ts) et echouait
+    // systematiquement alors que le nettoyage lui-meme reussissait, juste
+    // trop lentement (trouve reellement en testant, pas suppose).
     await cleanupAll(admin, state);
-  });
+  }, 60000);
 
   it("le 31e compte apprenant est refusé sur le tenant essai plein", async () => {
     const email = `test_essai_plein_31_${crypto.randomUUID()}@atlaslab-tests.invalid`;
