@@ -36,3 +36,14 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           TENANT_SECRETS_ENCRYPTION_KEY: ${{ secrets.TENANT_SECRETS_ENCRYPTION_KEY }}
+
+      # Garde-fou (2026-08-07) : les migrations supabase/migrations/ sont
+      # appliquees a la main via le SQL Editor (pas de CLI Supabase en place,
+      # voir README) - verifie que les tables/colonnes des migrations avec
+      # "signature" existent bien sur le vrai projet Supabase de dev, plutot
+      # que de decouvrir une migration oubliee en production.
+      - name: Verification derive des migrations SQL
+        run: npm run check-migrations
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

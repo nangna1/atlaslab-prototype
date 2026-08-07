@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "check-migrations": "node scripts/check-migration-drift.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.112.3",

@@ -105,6 +105,14 @@ du dashboard (pas de CLI Supabase en place), dans l'ordre chronologique du nom d
 Pour un nouveau projet Supabase : exécuter toutes les migrations dans l'ordre, puis créer un
 utilisateur via Dashboard → Authentication → Users et l'insérer dans `public.users`.
 
+**Vérifier qu'aucune migration n'a été oubliée** : `npm run check-migrations` interroge le vrai
+projet Supabase (mêmes identifiants que les tests) et vérifie que les tables/colonnes des
+migrations qui en créent existent bien réellement — garde-fou contre l'application manuelle qui
+en oublierait une. Ne couvre pas les migrations RLS-only/fonctions/grants (pas de table/colonne à
+vérifier) ; exécuté aussi en CI à chaque push/PR (`.github/workflows/ci.yml`). En ajoutant une
+migration qui crée une table/colonne, ajouter sa signature dans
+`scripts/check-migration-drift.mjs`.
+
 ## Variables d'environnement (`.env.local`, non versionné)
 
 ```
