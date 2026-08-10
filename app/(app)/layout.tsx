@@ -1,8 +1,8 @@
 import AppSidebar from "./AppSidebar";
 
 // Layout du groupe de routes (app) - non-racine (le root layout reste
-// app/layout.tsx, qui garde <html>/<body>, polices, banners, AiAssistant,
-// service worker : voir la doc route-groups de cette version de Next dans
+// app/layout.tsx, qui garde <html>/<body>, polices, banners, service
+// worker : voir la doc route-groups de cette version de Next dans
 // node_modules/next/dist/docs/01-app/, aucun risque de double layout racine
 // ici). Grille 248px/1fr, sidebar sticky pleine hauteur (voir AppSidebar.tsx).
 export default function AppLayout({ children }: { children: React.ReactNode }) {
