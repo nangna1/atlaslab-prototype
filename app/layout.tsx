@@ -1,20 +1,37 @@
 import type { Metadata, Viewport } from "next";
-import { Big_Shoulders, Source_Serif_4, Geist_Mono } from "next/font/google";
+import { Manrope, Noto_Naskh_Arabic, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import RegisterServiceWorker from "./RegisterServiceWorker";
 import OfflineStatusBanner from "./OfflineStatusBanner";
 import DemoReturnBanner from "./DemoReturnBanner";
+import AiAssistant from "./AiAssistant";
 import { getLocale } from "@/lib/i18n/get-locale";
 import { isRtl } from "@/lib/i18n/config";
+import { createClient } from "@/lib/supabase/server";
 
-const fontDisplay = Big_Shoulders({
+// Redesign 2026-08-10 : police unique Manrope (voir handoff design) pour
+// titres et corps de texte - fontDisplay et fontBody pointent maintenant
+// vers la meme famille. Les deux variables CSS sont conservees separement
+// (plutot que fusionnees en une seule) pour ne rien casser des usages
+// existants de var(--font-display)/var(--font-body) dans le reste de l'app.
+const fontDisplay = Manrope({
+  weight: ["400", "500", "600", "700", "800"],
   variable: "--font-display",
   subsets: ["latin"],
 });
 
-const fontBody = Source_Serif_4({
+const fontBody = Manrope({
+  weight: ["400", "500", "600", "700", "800"],
   variable: "--font-body",
   subsets: ["latin"],
+});
+
+// Libelles en arabe (selecteur de langue FR/EN/عربي) - voir app/globals.css
+// ([lang="ar"] / .font-arabic).
+const fontArabic = Noto_Naskh_Arabic({
+  weight: ["400", "600"],
+  variable: "--font-arabic",
+  subsets: ["arabic"],
 });
 
 const geistMono = Geist_Mono({
@@ -33,7 +50,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#16202c",
+  themeColor: "#0e1512",
 };
 
 export default async function RootLayout({
@@ -43,16 +60,31 @@ export default async function RootLayout({
 }>) {
   const locale = await getLocale();
 
+  // Role de l'utilisateur connecte, pour l'assistant IA (app/AiAssistant.tsx)
+  // -- null si non connecte, auquel cas le composant ne s'affiche pas.
+  // Meme requete que les autres pages authentifiees (ex. app/cours/page.tsx),
+  // mais reduite au seul champ necessaire ici.
+  let role: string | null = null;
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) {
+    const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single();
+    role = profile?.role ?? null;
+  }
+
   return (
     <html
       lang={locale}
       dir={isRtl(locale) ? "rtl" : "ltr"}
-      className={`${fontDisplay.variable} ${fontBody.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${fontDisplay.variable} ${fontBody.variable} ${fontArabic.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <DemoReturnBanner />
         <OfflineStatusBanner />
         {children}
+        <AiAssistant role={role} locale={locale} />
         <RegisterServiceWorker />
       </body>
     </html>

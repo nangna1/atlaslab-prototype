@@ -1,19 +1,61 @@
 @import "tailwindcss";
 
+/* Tokens du redesign AtlasLab (2026-08-10, voir handoff
+   D:\claude\jarvis\Redesign AtlasLab\design_handoff_atlaslab\README.md).
+   Remplace integralement l'ancien theme clair "papier" (--ink/--background/
+   --brand...). Les noms de variables existants sont conserves quand un
+   mapping direct existe, pour que le remap Tailwind gray-* ci-dessous et les
+   ~55 fichiers qui l'utilisent deja (text-gray-*, bg-gray-*...) heritent du
+   nouveau theme sans etre touches un par un. */
 :root {
-  --ink: #16202c;
-  --ink-mid: #334150;
-  --ink-soft: #52626f;
-  --ink-faint: #7e9186;
-  --background: #eef3ee;
-  --background-muted: #e3ece3;
-  --surface: #ffffff;
-  --line: #d2ddd5;
-  --line-strong: #a8b8ac;
-  --brand: #4f46e5;
-  --brand-soft: #e8e6fb;
-  --brand-ink: #ffffff;
-  --foreground: var(--ink);
+  --bg: #0e1512;
+  --bg-panel: #111a17;
+  --surface: #141f1b;
+  --surface-2: #101a16;
+  --surface-3: #182420;
+  --line: #1e2a25;
+  --line-2: #23332d;
+  --line-3: #1b2621;
+  --line-hover: #2f4a40;
+  --line-accent: #24463a;
+  --accent: #5fd3a0;
+  --accent-hi: #7be0b4;
+  --accent-deep: #2c9b72;
+  --on-accent: #08110d;
+  --text: #eaf2ed;
+  --text-2: #c8d8d0;
+  --text-3: #b6c9c0;
+  --text-muted: #93a69d;
+  --text-faint: #7c8f86;
+  --warn-bg: #3a2a18;
+  --warn-fg: #e8b366;
+  --ok-bg: #16302a;
+  --ok-fg: #5fd3a0;
+  --chip-bg: #1b2e27;
+  --inactive-dot: #2a3a34;
+  --avatar-bg: #243430;
+  --logo-plate: #f4f8f6;
+  /* Pas de token dedie dans le handoff pour les erreurs de formulaire (les
+     tokens warn et ok y sont reserves aux badges de statut de frais) - les
+     53 fichiers qui utilisaient du text-red-600/bg-red-100 Tailwind brut
+     migrent vers celui-ci. */
+  --error: #e8867d;
+  --error-bg: #3a2018;
+
+  /* Alias retro-compatibles : anciens noms de tokens utilises directement
+     (style={{ color: "var(--ink-soft)" }}...) dans app/cours/page.tsx et
+     d'autres fichiers non encore migres vers les noms ci-dessus. */
+  --ink: var(--text);
+  --ink-mid: var(--text-2);
+  --ink-soft: var(--text-muted);
+  --ink-faint: var(--text-faint);
+  --background: var(--bg);
+  --background-muted: var(--surface-2);
+  --line-strong: var(--line-hover);
+  --brand: var(--accent);
+  --brand-soft: var(--ok-bg);
+  --brand-ink: var(--on-accent);
+  --foreground: var(--text);
 }
 
 @theme inline {
@@ -24,31 +66,56 @@
 
   /* Remappe la palette Tailwind gray par defaut sur les tokens AtlasLab :
      tout usage existant de text-gray, bg-gray, border-gray herite
-     automatiquement de la teinte ardoise / vert clair. */
-  --color-gray-50: var(--background);
-  --color-gray-100: var(--background-muted);
+     automatiquement du theme sombre. */
+  --color-gray-50: var(--surface);
+  --color-gray-100: var(--surface-2);
   --color-gray-200: var(--line);
-  --color-gray-300: var(--line-strong);
-  --color-gray-400: var(--ink-faint);
-  --color-gray-500: var(--ink-soft);
-  --color-gray-600: var(--ink-soft);
-  --color-gray-700: var(--ink-mid);
-  --color-gray-800: var(--ink-mid);
-  --color-gray-900: var(--ink);
-  --color-gray-950: var(--ink);
+  --color-gray-300: var(--line-hover);
+  --color-gray-400: var(--text-faint);
+  --color-gray-500: var(--text-muted);
+  --color-gray-600: var(--text-muted);
+  --color-gray-700: var(--text-2);
+  --color-gray-800: var(--text);
+  --color-gray-900: var(--text);
+  --color-gray-950: var(--text);
+
+  /* text-red-* et bg-red-* -> --error (remplace les usages bruts d'erreur
+     de formulaire, voir commentaire sur --error ci-dessus). */
+  --color-red-50: var(--error-bg);
+  --color-red-100: var(--error-bg);
+  --color-red-200: var(--error-bg);
+  --color-red-600: var(--error);
+  --color-red-700: var(--error);
+  --color-red-800: var(--error);
+
+  /* text-indigo-* et bg-indigo-* -> --accent (9 fichiers utilisaient
+     indigo-600 comme approximation codee en dur de l'ancien --brand). */
+  --color-indigo-50: var(--ok-bg);
+  --color-indigo-100: var(--ok-bg);
+  --color-indigo-600: var(--accent);
+  --color-indigo-700: var(--accent-deep);
+
+  /* text-green-* et bg-green-* -> tokens ok (badges de succes/statut "paye"). */
+  --color-green-100: var(--ok-bg);
+  --color-green-700: var(--ok-fg);
+  --color-green-800: var(--ok-fg);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-body), Georgia, serif;
-  background-image: radial-gradient(circle, var(--line-strong) 0.6px, transparent 0.6px);
-  background-size: 22px 22px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body), sans-serif;
 }
 
 h1, h2, h3, h4 {
-  font-family: var(--font-display), "Arial Narrow", sans-serif;
-  letter-spacing: -0.01em;
+  font-family: var(--font-display), sans-serif;
+  letter-spacing: -0.02em;
+}
+
+/* Libelles en arabe (selecteur de langue, dir="rtl") - police dediee, voir
+   app/layout.tsx (variable --font-arabic, Noto Naskh Arabic). */
+[lang="ar"], .font-arabic {
+  font-family: var(--font-arabic), serif;
 }
 
 @layer components {
@@ -56,30 +123,40 @@ h1, h2, h3, h4 {
     @apply mx-auto max-w-3xl px-6 py-10;
   }
 
+  .nowrap {
+    white-space: nowrap;
+  }
+
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-[3px] px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-[10px] px-4 py-2.5 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-50;
     font-family: var(--font-display), sans-serif;
-    letter-spacing: 0.01em;
-    background-color: var(--brand);
-    border: 1px solid var(--brand);
-    color: var(--brand-ink);
+    background-color: var(--accent);
+    border: 1px solid var(--accent);
+    color: var(--on-accent);
   }
   .btn-primary:hover:not(:disabled) {
-    filter: brightness(0.9);
+    background-color: var(--accent-hi);
+    border-color: var(--accent-hi);
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-[3px] border px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-[10px] border px-4 py-2.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50;
     font-family: var(--font-display), sans-serif;
-    border-color: var(--line-strong);
-    background: var(--surface);
-    color: var(--ink);
+    border-color: var(--inactive-dot);
+    background: transparent;
+    color: var(--text);
   }
   .btn-secondary:hover:not(:disabled) {
-    background: var(--background);
+    background: var(--surface-3);
   }
   .btn-danger {
-    @apply inline-flex items-center justify-center gap-2 rounded-[3px] border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-[10px] border px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50;
     font-family: var(--font-display), sans-serif;
+    border-color: var(--error-bg);
+    background: var(--error-bg);
+    color: var(--error);
+  }
+  .btn-danger:hover:not(:disabled) {
+    filter: brightness(1.15);
   }
   .btn-sm {
     @apply px-2.5! py-1! text-xs!;
@@ -87,75 +164,57 @@ h1, h2, h3, h4 {
   .btn-link {
     @apply text-sm font-semibold hover:underline;
     font-family: var(--font-display), sans-serif;
-    color: var(--brand);
+    color: var(--accent);
   }
 
   .input {
-    @apply block w-full rounded-[3px] border px-3 py-2 text-sm outline-none;
-    border-color: var(--line-strong);
+    @apply block w-full rounded-[10px] border px-3.5 py-2.5 text-sm outline-none;
+    border-color: var(--line-2);
     background: var(--surface);
-    color: var(--ink);
+    color: var(--text);
   }
   .input:focus {
-    border-color: var(--brand);
-    box-shadow: 0 0 0 1px var(--brand);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
   }
   .label {
-    @apply mb-1 block text-sm font-medium;
-    color: var(--ink-soft);
+    @apply mb-1.5 block text-sm font-medium;
+    color: var(--text-muted);
   }
 
   .card {
-    @apply relative rounded-[4px] border p-4 shadow-sm;
+    @apply relative rounded-2xl border p-4;
     border-color: var(--line);
     background: var(--surface);
   }
-  .card::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 1rem;
-    width: 22px;
-    height: 2px;
-    background: var(--brand);
-  }
   .card-link {
-    @apply relative block rounded-[4px] border p-4 shadow-sm transition hover:shadow-md;
-    border-color: var(--line-strong);
+    @apply relative block rounded-2xl border p-4 transition-colors;
+    border-color: var(--line);
     background: var(--surface);
   }
   .card-link:hover {
-    border-color: var(--brand);
-  }
-  .card-link::before,
-  .card-link::after {
-    content: "";
-    position: absolute;
-    top: -3.5px;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--brand);
-  }
-  .card-link::before {
-    left: -3.5px;
-  }
-  .card-link::after {
-    right: -3.5px;
+    border-color: var(--line-hover);
+    background: #17231f;
   }
   .card-dashed {
-    @apply rounded-[4px] border border-dashed p-4;
-    border-color: var(--line-strong);
-    background: var(--background);
+    @apply rounded-2xl border border-dashed p-4;
+    border-color: var(--inactive-dot);
+    background: var(--surface-2);
   }
 
   .badge-success {
-    @apply inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800;
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold;
+    background: var(--ok-bg);
+    color: var(--ok-fg);
   }
   .badge-error {
-    @apply inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800;
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold;
+    background: var(--error-bg);
+    color: var(--error);
   }
   .badge-muted {
-    @apply inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600;
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+    background: var(--surface-3);
+    color: var(--text-muted);
   }
 }
