@@ -243,8 +243,8 @@ export default async function CoursDetailPage({
     return (
       <div style={brandStyle}>
         <div
-          className="px-10 pt-8 pb-[30px]"
-          style={{ background: "linear-gradient(150deg,#173029,#111a17)", borderBottom: "1px solid var(--line)" }}
+          className="px-5 pt-6 pb-6 lg:px-10 lg:pt-8 lg:pb-[30px]"
+          style={{ background: "linear-gradient(150deg,#eaf7f0,#ffffff)", borderBottom: "1px solid var(--line)" }}
         >
           <Link href="/cours/catalogue" className="mb-4 inline-block text-[13px]" style={{ color: "var(--text-muted)" }}>
             ← Catalogue
@@ -288,7 +288,7 @@ export default async function CoursDetailPage({
           </div>
         </div>
 
-        <div className="grid items-start gap-7 px-10 py-8 lg:grid-cols-[1.7fr_1fr]">
+        <div className="grid items-start gap-7 px-5 py-6 lg:grid-cols-[1.7fr_1fr] lg:px-10 lg:py-8">
           <div>
             <h2 className="mb-4 text-[19px] font-extrabold">Programme</h2>
             <div className="flex flex-col gap-3.5">

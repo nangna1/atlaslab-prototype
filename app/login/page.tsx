@@ -180,7 +180,7 @@ export default function LoginPage() {
 
       <div
         className="hidden items-center justify-center border-l p-12 md:flex"
-        style={{ background: "linear-gradient(150deg,#173029,#0e1512)", borderColor: "var(--line)" }}
+        style={{ background: "linear-gradient(150deg,#eaf7f0,#ffffff)", borderColor: "var(--line)" }}
       >
         <div className="max-w-[440px]">
           <p className="mb-[18px] text-xs font-bold tracking-[0.12em]" style={{ color: "var(--accent)" }}>
@@ -193,11 +193,11 @@ export default function LoginPage() {
           >
             <defs>
               <pattern id="loginHatch" width="8" height="8" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
-                <line x1="0" y1="0" x2="0" y2="8" stroke="#18241f" strokeWidth="4" />
+                <line x1="0" y1="0" x2="0" y2="8" stroke="#dbe8e1" strokeWidth="4" />
               </pattern>
             </defs>
             <rect width="520" height="320" fill="url(#loginHatch)" />
-            <text x="260" y="160" textAnchor="middle" fontFamily="monospace" fontSize="12" fill="#5c7168" letterSpacing="1.4">
+            <text x="260" y="160" textAnchor="middle" fontFamily="monospace" fontSize="12" fill="#8a9c92" letterSpacing="1.4">
               CAPTURE — SIMULATION DE CIRCUIT
             </text>
           </svg>
