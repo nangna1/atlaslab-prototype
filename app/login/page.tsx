@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useLocale } from "@/lib/i18n/use-locale";
 import { getDictionary } from "@/lib/i18n/dictionaries";
+import LanguageSwitcher from "@/app/LanguageSwitcher";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -85,66 +86,125 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-50 px-6">
-      <div className="w-full max-w-sm">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo-atlaslab.png" alt="AtlasLab" className="mx-auto mb-2 h-20 w-auto" />
-        <p className="mb-6 text-center text-sm text-gray-500">{dict.login.subtitle}</p>
-        {needsTotp ? (
-          <form onSubmit={handleTotpSubmit} className="card flex flex-col gap-4">
-            <p className="text-sm text-gray-600">
-              Entrez le code à 6 chiffres de votre application d&apos;authentification.
-            </p>
-            <input
-              type="text"
-              inputMode="numeric"
-              required
-              autoFocus
-              maxLength={6}
-              value={totpCode}
-              onChange={(e) => setTotpCode(e.target.value)}
-              className="input text-center"
-              placeholder="123456"
-            />
-            {error && <p className="text-sm text-red-600">{error}</p>}
-            <button type="submit" disabled={loading || totpCode.length < 6} className="btn-primary w-full">
-              {loading ? "Vérification..." : "Vérifier"}
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={handleSubmit} className="card flex flex-col gap-4">
-            <label>
-              <span className="label">{dict.login.email}</span>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="input"
-              />
-            </label>
-            <label>
-              <span className="label">{dict.login.password}</span>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="input"
-              />
-            </label>
-            {error && <p className="text-sm text-red-600">{error}</p>}
-            <button type="submit" disabled={loading} className="btn-primary w-full">
-              {loading ? dict.login.submitting : dict.login.submit}
-            </button>
-            <Link href="/forgot-password" className="btn-link text-center text-sm">
-              {dict.login.forgotPassword}
-            </Link>
-            <Link href="/inscription-etablissement" className="btn-link text-center text-sm">
-              {dict.login.signupTenant}
-            </Link>
-          </form>
-        )}
+    <main className="grid min-h-screen grid-cols-1 md:grid-cols-2">
+      <div className="flex items-center justify-center p-8 md:p-12">
+        <div className="w-full max-w-[380px]">
+          <div
+            className="mb-9 inline-block rounded-[12px] px-4 py-2.5"
+            style={{ background: "var(--logo-plate)" }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-atlaslab.png" alt="AtlasLab" className="block h-[78px] w-auto" />
+          </div>
+
+          {needsTotp ? (
+            <>
+              <h1 className="mb-2 text-[30px] font-extrabold tracking-[-0.03em]">Vérification en deux étapes</h1>
+              <p className="mb-7 text-[14.5px]" style={{ color: "var(--text-muted)" }}>
+                Entrez le code à 6 chiffres de votre application d&apos;authentification.
+              </p>
+              <form onSubmit={handleTotpSubmit} className="flex flex-col gap-4">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  required
+                  autoFocus
+                  maxLength={6}
+                  value={totpCode}
+                  onChange={(e) => setTotpCode(e.target.value)}
+                  className="input text-center text-lg tracking-[0.3em]"
+                  placeholder="123456"
+                />
+                {error && (
+                  <p className="text-sm" style={{ color: "var(--error)" }}>
+                    {error}
+                  </p>
+                )}
+                <button type="submit" disabled={loading || totpCode.length < 6} className="btn-primary w-full">
+                  {loading ? "Vérification..." : "Vérifier"}
+                </button>
+              </form>
+            </>
+          ) : (
+            <>
+              <h1 className="mb-2 text-[30px] font-extrabold tracking-[-0.03em]">Connexion à votre espace</h1>
+              <p className="mb-7 text-[14.5px]" style={{ color: "var(--text-muted)" }}>
+                {dict.login.subtitle}
+              </p>
+              <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                <label>
+                  <span className="label">{dict.login.email}</span>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="input"
+                  />
+                </label>
+                <label>
+                  <span className="label">{dict.login.password}</span>
+                  <input
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="input"
+                  />
+                </label>
+                {error && (
+                  <p className="text-sm" style={{ color: "var(--error)" }}>
+                    {error}
+                  </p>
+                )}
+                <button type="submit" disabled={loading} className="btn-primary w-full">
+                  {loading ? dict.login.submitting : dict.login.submit}
+                </button>
+                <div className="flex items-center justify-between text-[13.5px]">
+                  <Link href="/forgot-password" style={{ color: "var(--text-muted)" }}>
+                    {dict.login.forgotPassword}
+                  </Link>
+                  <Link href="/inscription-etablissement" className="font-semibold" style={{ color: "var(--accent)" }}>
+                    {dict.login.signupTenant}
+                  </Link>
+                </div>
+              </form>
+            </>
+          )}
+
+          <div className="mt-9">
+            <LanguageSwitcher variant="pill" />
+          </div>
+        </div>
+      </div>
+
+      <div
+        className="hidden items-center justify-center border-l p-12 md:flex"
+        style={{ background: "linear-gradient(150deg,#173029,#0e1512)", borderColor: "var(--line)" }}
+      >
+        <div className="max-w-[440px]">
+          <p className="mb-[18px] text-xs font-bold tracking-[0.12em]" style={{ color: "var(--accent)" }}>
+            LABORATOIRES VIRTUELS
+          </p>
+          <svg
+            viewBox="0 0 520 320"
+            className="block w-full rounded-[14px] border"
+            style={{ background: "var(--surface-2)", borderColor: "var(--line)" }}
+          >
+            <defs>
+              <pattern id="loginHatch" width="8" height="8" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+                <line x1="0" y1="0" x2="0" y2="8" stroke="#18241f" strokeWidth="4" />
+              </pattern>
+            </defs>
+            <rect width="520" height="320" fill="url(#loginHatch)" />
+            <text x="260" y="160" textAnchor="middle" fontFamily="monospace" fontSize="12" fill="#5c7168" letterSpacing="1.4">
+              CAPTURE — SIMULATION DE CIRCUIT
+            </text>
+          </svg>
+          <p className="mt-[22px] text-base leading-[1.6]" style={{ color: "var(--text-3)" }}>
+            Simulez un circuit analogique ou logique directement depuis la leçon, sans matériel et même hors connexion.
+          </p>
+        </div>
       </div>
     </main>
   );
