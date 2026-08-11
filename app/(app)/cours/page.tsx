@@ -13,6 +13,18 @@ import {
 } from "@/lib/learner-dashboard-data";
 import { getCoursEnseignes, getDevoirsACorriger, getProfDashboardStats } from "@/lib/professeur-dashboard-data";
 
+// generateCourseFromDocument (ImportCourseForm, rendu sur cette page) lit un
+// vrai PDF/image nativement puis genere une reponse volumineuse (2026-08-11 :
+// jusqu'a 15582 tokens de sortie mesures sur un cours reel de 87 pages) - un
+// appel de plusieurs dizaines de secondes n'a rien d'exceptionnel. maxDuration
+// pour une Server Action se configure au niveau de la PAGE qui l'utilise, pas
+// dans actions.ts (voir node_modules/next/dist/docs/.../maxDuration.md).
+// 300s (5 min) laisse une vraie marge ; le plan Vercel reel (Hobby, Fluid
+// Compute d'apres le dashboard) peut plafonner plus bas, non verifie au
+// moment de ce changement - a surveiller si un timeout survient encore sur
+// un document exceptionnellement dense.
+export const maxDuration = 300;
+
 export default async function CoursListPage({
   searchParams,
 }: {

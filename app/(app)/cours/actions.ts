@@ -245,7 +245,16 @@ export async function generateCourseFromDocument(
   try {
     response = await anthropic.messages.create({
       model: "claude-sonnet-5",
-      max_tokens: 4096,
+      // Vrai bug trouve en testant sur un document reel (2026-08-11,
+      // "COURS DE DESSIN 1ERE ANNEE.pdf", 87 pages) : a 4096, la reponse
+      // s'arretait a stop_reason "max_tokens" en plein milieu du JSON de
+      // structuration (seul le champ "filiere" avait ete ecrit, ni titre ni
+      // modules) - un vrai cours de plusieurs dizaines de pages a largement
+      // besoin de plus de place que ca pour ses resumes de lecon. Reteste a
+      // 16000 : succes (stop_reason "tool_use", JSON complet) mais deja a
+      // 15582 tokens de sortie sur ce document, tres proche du plafond.
+      // 24000 laisse une vraie marge pour des cours encore plus longs/denses.
+      max_tokens: 24000,
       tools: [COURSE_STRUCTURE_TOOL],
       tool_choice: { type: "tool", name: "structurer_cours" },
       messages: [{ role: "user", content: userContent }],
@@ -256,6 +265,19 @@ export async function generateCourseFromDocument(
 
   const toolUse = response.content.find((c) => c.type === "tool_use");
   if (!toolUse) return { error: "La génération IA n'a produit aucun résultat exploitable." };
+
+  if (response.stop_reason === "max_tokens") {
+    // Toujours possible sur un document exceptionnellement dense meme a
+    // 16000 - un JSON tronque ici produirait un objet incomplet que
+    // parseCourseTemplate rejetterait de toute facon avec un message
+    // generique ("titre requis"), trompeur sur la vraie cause. Message
+    // explicite a la place.
+    return {
+      error:
+        "Le document est trop dense pour être structuré en un seul passage (réponse de l'IA coupée). " +
+        "Essayez avec un document plus court, ou scindez-le en plusieurs parties.",
+    };
+  }
 
   const parsed = parseCourseTemplate(toolUse.input);
   if ("error" in parsed) return { error: `Résultat IA invalide : ${parsed.error}` };
