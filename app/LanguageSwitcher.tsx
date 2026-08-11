@@ -37,7 +37,7 @@ export default function LanguageSwitcher({ variant = "plain" }: { variant?: "pla
               style={{
                 background: active ? "var(--accent)" : "transparent",
                 color: active ? "var(--on-accent)" : "var(--text-muted)",
-                fontFamily: l === "ar" ? "var(--font-arabic)" : undefined,
+                fontFamily: l === "ar" ? "'Noto Naskh Arabic', serif" : undefined,
               }}
             >
               {l === "ar" ? "العربية" : LOCALE_LABELS[l]}

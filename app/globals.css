@@ -112,10 +112,10 @@ h1, h2, h3, h4 {
   letter-spacing: -0.02em;
 }
 
-/* Libelles en arabe (selecteur de langue, dir="rtl") - police dediee, voir
-   app/layout.tsx (variable --font-arabic, Noto Naskh Arabic). */
+/* Libelles en arabe (selecteur de langue, dir="rtl") - police systeme, pas
+   auto-hebergee via next/font/google (voir app/layout.tsx pour pourquoi). */
 [lang="ar"], .font-arabic {
-  font-family: var(--font-arabic), serif;
+  font-family: "Noto Naskh Arabic", serif;
 }
 
 @layer components {

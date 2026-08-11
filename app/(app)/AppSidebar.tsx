@@ -170,7 +170,7 @@ export default async function AppSidebar() {
             </span>
             <span
               className="flex-1 rounded-full py-[5px] text-center text-[11.5px]"
-              style={{ color: "var(--text-muted)", fontFamily: "var(--font-arabic)" }}
+              style={{ color: "var(--text-muted)", fontFamily: "'Noto Naskh Arabic', serif" }}
             >
               عربي
             </span>

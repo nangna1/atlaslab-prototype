@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Manrope, Noto_Naskh_Arabic, Geist_Mono } from "next/font/google";
+import { Manrope, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import RegisterServiceWorker from "./RegisterServiceWorker";
 import OfflineStatusBanner from "./OfflineStatusBanner";
@@ -24,18 +24,21 @@ const fontBody = Manrope({
   subsets: ["latin"],
 });
 
-// Libelles en arabe (selecteur de langue FR/EN/عربي) - voir app/globals.css
-// ([lang="ar"] / .font-arabic).
-const fontArabic = Noto_Naskh_Arabic({
-  weight: ["400", "600"],
-  variable: "--font-arabic",
-  subsets: ["arabic"],
-});
-
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
+
+// Noto Naskh Arabic (libelles arabes du selecteur de langue) N'EST PAS
+// chargee via next/font/google ici : ca compilait en local mais faisait
+// echouer le build sur l'infra Vercel (Turbopack) avec "Module not found:
+// Can't resolve '@vercel/turbopack-next/internal/font/google/font'" -
+// verifie reellement via le log de build Vercel (2026-08-11), pas suppose.
+// Repli sur un simple `font-family: 'Noto Naskh Arabic', serif` dans
+// app/globals.css / app/LanguageSwitcher.tsx / app/(app)/AppSidebar.tsx
+// (meme approche que l'app avant ce redesign) : le navigateur va chercher
+// une police systeme correspondante plutot que d'en auto-heberger une via
+// Next - acceptable ici, l'arabe ne couvre que 2 petits libelles de pastille.
 
 export const metadata: Metadata = {
   title: "AtlasLab",
@@ -62,7 +65,7 @@ export default async function RootLayout({
     <html
       lang={locale}
       dir={isRtl(locale) ? "rtl" : "ltr"}
-      className={`${fontDisplay.variable} ${fontBody.variable} ${fontArabic.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${fontDisplay.variable} ${fontBody.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <DemoReturnBanner />
