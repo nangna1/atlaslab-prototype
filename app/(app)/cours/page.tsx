@@ -58,7 +58,7 @@ export default async function CoursListPage({
 
     return (
       <div
-        className="px-10 pt-9 pb-14"
+        className="px-5 pt-6 pb-10 lg:px-10 lg:pt-9 lg:pb-14"
         style={{ "--brand": tenant?.couleur_primaire || undefined } as React.CSSProperties}
       >
         <div className="mb-[30px] flex flex-wrap items-end justify-between gap-6">

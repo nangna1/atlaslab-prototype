@@ -50,7 +50,7 @@ export default async function CataloguePage({
   const activeFiliere = filiereFiltre && filieres.includes(filiereFiltre) ? filiereFiltre : "Toutes";
 
   return (
-    <div className="px-10 pt-9 pb-14">
+    <div className="px-5 pt-6 pb-10 lg:px-10 lg:pt-9 lg:pb-14">
       <h1 className="mb-2 text-[34px] font-extrabold tracking-[-0.03em]">Catalogue de cours</h1>
       <p className="mb-6 text-[15px]" style={{ color: "var(--text-muted)" }}>
         Vos cours, filtrables par filière.
@@ -101,11 +101,11 @@ export default async function CataloguePage({
               <svg viewBox="0 0 400 130" className="block w-full" style={{ background: "var(--surface-2)" }}>
                 <defs>
                   <pattern id={`hc-${c.id}`} width="8" height="8" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
-                    <line x1="0" y1="0" x2="0" y2="8" stroke="#18241f" strokeWidth="4" />
+                    <line x1="0" y1="0" x2="0" y2="8" stroke="#dbe8e1" strokeWidth="4" />
                   </pattern>
                 </defs>
                 <rect width="400" height="130" fill={`url(#hc-${c.id})`} />
-                <text x="200" y="70" textAnchor="middle" fontFamily="monospace" fontSize="10" fill="#5c7168" letterSpacing="1.2">
+                <text x="200" y="70" textAnchor="middle" fontFamily="monospace" fontSize="10" fill="#8a9c92" letterSpacing="1.2">
                   {c.code}
                 </text>
               </svg>

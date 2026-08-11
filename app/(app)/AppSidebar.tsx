@@ -118,7 +118,7 @@ export default async function AppSidebar() {
 
   return (
     <aside
-      className="box-border flex h-screen flex-col gap-[26px] overflow-y-auto px-4 py-5"
+      className="box-border flex h-full flex-col gap-[26px] overflow-y-auto px-4 py-5 lg:h-screen"
       style={{ background: "var(--bg-panel)", borderRight: "1px solid var(--line)", position: "sticky", top: 0 }}
     >
       <div className="px-2">

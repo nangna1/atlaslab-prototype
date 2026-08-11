@@ -46,7 +46,7 @@ export default async function MesFraisPage() {
     .order("created_at", { ascending: false });
 
   return (
-    <div className="mx-auto max-w-[1000px] px-10 py-9">
+    <div className="mx-auto max-w-[1000px] px-5 py-6 lg:px-10 lg:py-9">
       <h1 className="mb-2 text-[34px] font-extrabold tracking-[-0.03em]">Frais de scolarité</h1>
       <p className="mb-7 text-[15px]" style={{ color: "var(--text-muted)" }}>
         {tenant?.nom ?? ""}
@@ -118,7 +118,7 @@ export default async function MesFraisPage() {
 
         <div
           className="rounded-2xl border p-[22px]"
-          style={{ background: "linear-gradient(150deg,#173029,#141f1b)", borderColor: "var(--line-accent)" }}
+          style={{ background: "linear-gradient(150deg,#eaf7f0,#f7faf8)", borderColor: "var(--line-accent)" }}
         >
           <h3 className="mb-1.5 text-base font-bold">Payer en ligne</h3>
           <p className="mb-4.5 text-[13.5px]" style={{ color: "var(--text-muted)" }}>

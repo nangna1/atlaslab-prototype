@@ -237,8 +237,8 @@ export default async function LessonPage({
 
       <div className="min-w-0">
         <div
-          className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-5 border-b px-8 py-4 backdrop-blur-md"
-          style={{ borderColor: "var(--line)", background: "#0e1512f2" }}
+          className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-5 border-b px-5 py-4 backdrop-blur-md lg:px-8"
+          style={{ borderColor: "var(--line)", background: "#ffffffeb" }}
         >
           <div className="flex items-center gap-3">
             <OfflineBadge />
@@ -270,7 +270,7 @@ export default async function LessonPage({
           </div>
         </div>
 
-        <div className="max-w-[900px] px-8 py-9">
+        <div className="max-w-[900px] px-5 py-6 lg:px-8 lg:py-9">
           <h1 className="mb-4.5 text-[34px] font-extrabold tracking-[-0.03em]">{lesson.titre}</h1>
 
           {lesson.contenu_markdown && (

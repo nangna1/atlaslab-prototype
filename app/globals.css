@@ -1,46 +1,53 @@
 @import "tailwindcss";
 
-/* Tokens du redesign AtlasLab (2026-08-10, voir handoff
-   D:\claude\jarvis\Redesign AtlasLab\design_handoff_atlaslab\README.md).
-   Remplace integralement l'ancien theme clair "papier" (--ink/--background/
-   --brand...). Les noms de variables existants sont conserves quand un
-   mapping direct existe, pour que le remap Tailwind gray-* ci-dessous et les
-   ~55 fichiers qui l'utilisent deja (text-gray-*, bg-gray-*...) heritent du
-   nouveau theme sans etre touches un par un. */
+/* Tokens du redesign AtlasLab. Version claire (2026-08-11, retour reel d'un
+   test sur telephone : "le fond noir n'est pas bon, mets un fond blanc") -
+   remplace la version sombre du 2026-08-10 (voir handoff
+   D:\claude\jarvis\Redesign AtlasLab\design_handoff_atlaslab\README.md, qui
+   specifiait un theme sombre ; deviation assumee suite au retour utilisateur
+   direct sur le site en prod). Memes NOMS de variables que la version
+   sombre - seules les valeurs changent - pour que le remap Tailwind gray-*
+   ci-dessous et tous les composants qui referencent ces tokens en
+   heritent sans etre touches un par un. --accent est plus fonce qu'en
+   version sombre (#16794f contre #5fd3a0) : le meme mint clair utilise en
+   COULEUR DE TEXTE (liens, puces, libelles) n'aurait pas assez de contraste
+   sur un fond blanc (~1.8:1, tres en dessous du minimum WCAG AA de 4.5:1) -
+   --on-accent passe donc de sombre a blanc en consequence (texte clair sur
+   bouton vert plus fonce). */
 :root {
-  --bg: #0e1512;
-  --bg-panel: #111a17;
-  --surface: #141f1b;
-  --surface-2: #101a16;
-  --surface-3: #182420;
-  --line: #1e2a25;
-  --line-2: #23332d;
-  --line-3: #1b2621;
-  --line-hover: #2f4a40;
-  --line-accent: #24463a;
-  --accent: #5fd3a0;
-  --accent-hi: #7be0b4;
-  --accent-deep: #2c9b72;
-  --on-accent: #08110d;
-  --text: #eaf2ed;
-  --text-2: #c8d8d0;
-  --text-3: #b6c9c0;
-  --text-muted: #93a69d;
-  --text-faint: #7c8f86;
-  --warn-bg: #3a2a18;
-  --warn-fg: #e8b366;
-  --ok-bg: #16302a;
-  --ok-fg: #5fd3a0;
-  --chip-bg: #1b2e27;
-  --inactive-dot: #2a3a34;
-  --avatar-bg: #243430;
+  --bg: #ffffff;
+  --bg-panel: #f7faf8;
+  --surface: #ffffff;
+  --surface-2: #f3f7f5;
+  --surface-3: #eaf2ed;
+  --line: #e2e8e5;
+  --line-2: #d6dfda;
+  --line-3: #ecf1ee;
+  --line-hover: #8fd9b6;
+  --line-accent: #bdead2;
+  --accent: #16794f;
+  --accent-hi: #1e9863;
+  --accent-deep: #0f5e3c;
+  --on-accent: #ffffff;
+  --text: #16211c;
+  --text-2: #33453c;
+  --text-3: #2f3f37;
+  --text-muted: #5c6b62;
+  --text-faint: #75857c;
+  --warn-bg: #fdf1e0;
+  --warn-fg: #92600e;
+  --ok-bg: #e6f5ec;
+  --ok-fg: #16794f;
+  --chip-bg: #eaf5ef;
+  --inactive-dot: #c7d3cc;
+  --avatar-bg: #dbe8e1;
   --logo-plate: #f4f8f6;
   /* Pas de token dedie dans le handoff pour les erreurs de formulaire (les
      tokens warn et ok y sont reserves aux badges de statut de frais) - les
      53 fichiers qui utilisaient du text-red-600/bg-red-100 Tailwind brut
      migrent vers celui-ci. */
-  --error: #e8867d;
-  --error-bg: #3a2018;
+  --error: #b3261e;
+  --error-bg: #fbeae9;
 
   /* Alias retro-compatibles : anciens noms de tokens utilises directement
      (style={{ color: "var(--ink-soft)" }}...) dans app/cours/page.tsx et
