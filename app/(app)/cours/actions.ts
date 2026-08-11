@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { parseCourseTemplate, insertCourseFromTemplate } from "@/lib/course-import";
 import { COURSE_TEMPLATES } from "@/lib/course-templates";
-import { extractDocumentText } from "@/lib/document-text";
+import { extractDocumentText, buildNativeDocumentBlock, type NativeDocumentBlock } from "@/lib/document-text";
 
 const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }) : null;
 
@@ -206,11 +206,40 @@ export async function generateCourseFromDocument(
   }
 
   const file = formData.get("document") as File | null;
-  if (!file || file.size === 0) return { error: "Choisissez un document (PDF, DOCX ou PPTX)." };
+  if (!file || file.size === 0) return { error: "Choisissez un document (PDF, image, DOCX ou PPTX)." };
 
-  const extracted = await extractDocumentText(file);
-  if ("error" in extracted) return { error: extracted.error };
-  if (!extracted.text) return { error: "Aucun texte exploitable trouvé dans ce document." };
+  const instructions =
+    `Structure ce document pédagogique{NOM} en cours AtlasLab : découpe-le en modules cohérents puis en ` +
+    `leçons, en respectant l'ordre du document. Pour chaque leçon de type "contenu", écris un résumé ` +
+    `pédagogique clair (pas une copie verbatim). Ajoute une leçon de type "quiz" (2 à 4 questions) à la fin ` +
+    `d'un module seulement si le contenu s'y prête clairement (faits/définitions vérifiables) — sinon n'en ` +
+    `ajoute pas.`;
+
+  // PDF et images : lus nativement par Claude (le modele les "regarde"),
+  // pas d'extraction de texte prealable - fonctionne aussi bien sur un PDF
+  // scanne/photographie que sur un PDF texte, voir buildNativeDocumentBlock.
+  // DOCX/PPTX : pas de blocs "document"/"image" natifs pour ces formats
+  // cote API Claude, extraction de texte via extractDocumentText (mammoth/
+  // XML) comme avant, avec un plafond de troncature releve.
+  const nameLower = file.name.toLowerCase();
+  const isNativelyReadable = [".pdf", ".jpg", ".jpeg", ".png", ".webp"].some((ext) => nameLower.endsWith(ext));
+
+  let userContent: string | (NativeDocumentBlock | { type: "text"; text: string })[];
+
+  if (isNativelyReadable) {
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const block = buildNativeDocumentBlock(file, buffer);
+    if ("error" in block) return { error: block.error };
+    userContent = [block, { type: "text", text: instructions.replace("{NOM}", ` (${file.name})`) }];
+  } else {
+    const extracted = await extractDocumentText(file);
+    if ("error" in extracted) return { error: extracted.error };
+    if (!extracted.text) return { error: "Aucun texte exploitable trouvé dans ce document." };
+    userContent =
+      instructions.replace("{NOM}", ` (${file.name})`) +
+      (extracted.truncated ? "\n\n(Document tronqué : seul le début a été fourni.)" : "") +
+      `\n\n---\n\n${extracted.text}`;
+  }
 
   let response;
   try {
@@ -219,19 +248,7 @@ export async function generateCourseFromDocument(
       max_tokens: 4096,
       tools: [COURSE_STRUCTURE_TOOL],
       tool_choice: { type: "tool", name: "structurer_cours" },
-      messages: [
-        {
-          role: "user",
-          content:
-            `Voici le contenu extrait d'un document pédagogique (${file.name}). Structure-le en cours ` +
-            `AtlasLab : découpe-le en modules cohérents puis en leçons, en respectant l'ordre du document. ` +
-            `Pour chaque leçon de type "contenu", écris un résumé pédagogique clair (pas une copie verbatim). ` +
-            `Ajoute une leçon de type "quiz" (2 à 4 questions) à la fin d'un module seulement si le contenu ` +
-            `s'y prête clairement (faits/définitions vérifiables) — sinon n'en ajoute pas.` +
-            (extracted.truncated ? "\n\n(Document tronqué : seul le début a été fourni.)" : "") +
-            `\n\n---\n\n${extracted.text}`,
-        },
-      ],
+      messages: [{ role: "user", content: userContent }],
     });
   } catch {
     return { error: "Erreur lors de la génération IA — réessayez." };

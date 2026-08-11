@@ -12,7 +12,7 @@ export default function ModeleImportPage() {
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Modèle de cours pour import automatique par IA</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Un guide à suivre pour préparer votre document (PDF, Word ou PowerPoint) avant de le
+            Un guide à suivre pour préparer votre document (PDF, photo/scan, Word ou PowerPoint) avant de le
             téléverser dans « Générer un cours avec l&apos;IA ».
           </p>
         </div>
@@ -22,10 +22,12 @@ export default function ModeleImportPage() {
       <section className="mb-10">
         <h2 className="mb-3 text-lg font-semibold text-gray-900">Comment ça marche</h2>
         <p className="text-sm leading-relaxed text-gray-700">
-          Quand vous téléversez votre document, AtlasLab en extrait le texte puis demande à l&apos;IA de
-          le découper en modules et en leçons. L&apos;IA <strong>reformule</strong> votre contenu en résumé
-          pédagogique (ce n&apos;est pas une copie verbatim) — vos notes de cours brutes conviennent donc
-          très bien comme source. Le résultat est toujours à relire et corriger après l&apos;import.
+          Pour un PDF ou une photo/scan, l&apos;IA <strong>lit directement le document</strong> (comme le
+          ferait une personne qui le feuillette) — un cours scanné ou photographié fonctionne aussi bien
+          qu&apos;un PDF numérique. Pour un Word ou PowerPoint, AtlasLab en extrait d&apos;abord le texte.
+          Dans tous les cas, l&apos;IA <strong>reformule</strong> votre contenu en résumé pédagogique (ce
+          n&apos;est pas une copie verbatim) — vos notes de cours brutes conviennent donc très bien comme
+          source. Le résultat est toujours à relire et corriger après l&apos;import.
         </p>
       </section>
 
@@ -38,15 +40,18 @@ export default function ModeleImportPage() {
             taille de police disparaissent à l&apos;extraction — seul le texte brut est lu par l&apos;IA.
           </li>
           <li>
-            <strong>2. Pas de tableaux ni d&apos;images porteurs d&apos;information.</strong> L&apos;extraction
-            ne lit que le texte : un schéma ou un tableau de valeurs sera ignoré. Si son contenu est
-            important, décrivez-le aussi en phrases.
+            <strong>2. Tableaux et schémas : ça dépend du format.</strong> Dans un PDF ou une photo/scan,
+            l&apos;IA voit vraiment la page — tableaux, schémas et tout élément visuel sont pris en compte.
+            Dans un Word ou PowerPoint, seul le texte est extrait : un schéma ou un tableau de valeurs sera
+            ignoré, décrivez aussi son contenu en phrases si besoin.
           </li>
           <li>
-            <strong>3. Un document raisonnablement court.</strong> Seuls les ~15 000 premiers caractères
-            sont pris en compte (environ 8 à 10 pages denses) — au-delà, la fin de votre document est
-            ignorée sans erreur bloquante. Pour un cours plus long, scindez-le en plusieurs documents et
-            importez-les comme plusieurs cours.
+            <strong>3. Un document raisonnablement court.</strong> Pour un Word ou PowerPoint, seuls les
+            ~100 000 premiers caractères sont pris en compte (plusieurs dizaines de pages) — au-delà, la fin
+            de votre document est ignorée sans erreur bloquante. Pour un PDF ou une photo/scan, la limite
+            réelle est la taille du fichier (20 Mo maximum) plutôt qu&apos;un nombre de caractères. Pour un
+            cours plus long que ces limites, scindez-le en plusieurs documents et importez-les comme
+            plusieurs cours.
           </li>
           <li>
             <strong>4. Un ordre logique, du premier au dernier module.</strong> L&apos;IA respecte l&apos;ordre
@@ -64,8 +69,8 @@ export default function ModeleImportPage() {
       <section className="mb-10">
         <h2 className="mb-3 text-lg font-semibold text-gray-900">Formats acceptés</h2>
         <p className="text-sm leading-relaxed text-gray-700">
-          PDF (.pdf), Word (.docx) ou PowerPoint (.pptx). Les anciens formats binaires (.doc, .ppt) ne sont
-          pas pris en charge.
+          PDF (.pdf), photo/scan (.jpg, .png, .webp), Word (.docx) ou PowerPoint (.pptx), jusqu&apos;à 20 Mo.
+          Les anciens formats binaires (.doc, .ppt) ne sont pas pris en charge.
         </p>
       </section>
 
@@ -107,7 +112,7 @@ de temporisateurs, ou de circuits anti-rebond pour des boutons poussoirs.`}
       <section className="mb-10">
         <h2 className="mb-3 text-lg font-semibold text-gray-900">Après la préparation</h2>
         <p className="text-sm leading-relaxed text-gray-700">
-          Enregistrez votre document (PDF, Word ou PowerPoint), puis rendez-vous sur{" "}
+          Enregistrez votre document (PDF, photo/scan, Word ou PowerPoint), puis rendez-vous sur{" "}
           <Link href="/cours" className="text-indigo-600 hover:underline">
             Mes cours
           </Link>{" "}

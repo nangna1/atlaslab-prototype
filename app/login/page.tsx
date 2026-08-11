@@ -8,6 +8,32 @@ import { useLocale } from "@/lib/i18n/use-locale";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import LanguageSwitcher from "@/app/LanguageSwitcher";
 
+// Destination par role apres connexion (2026-08-11, demande utilisateur :
+// "un tableau de bord adapte a chaque utilisateur"). admin_tenant/
+// super_admin ont deja de vrais tableaux de bord ailleurs dans l'app
+// (statistiques d'etablissement, gestion multi-etablissements) - /cours
+// (liste de cours generique) n'est pas leur "chez eux" naturel, contrairement
+// a apprenant/professeur qui y ont chacun un tableau de bord dedie. Un
+// admin_tenant/super_admin garde neanmoins un acces complet a /cours via la
+// sidebar (voir AppSidebar.tsx) - seule la destination par defaut change ici,
+// aucune fonctionnalite n'est retiree.
+async function landingRouteForRole(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+): Promise<string> {
+  const { data: profile } = await supabase.from("users").select("role").eq("id", userId).single();
+  switch (profile?.role) {
+    case "admin_tenant":
+      return "/admin/tableau-de-bord";
+    case "super_admin":
+      return "/admin/etablissements";
+    case "parent":
+      return "/portail-parent";
+    default:
+      return "/cours";
+  }
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const locale = useLocale();
@@ -37,7 +63,7 @@ export default function LoginPage() {
     setError(null);
 
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
       setError(error.message);
@@ -52,7 +78,7 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/cours");
+    router.push(await landingRouteForRole(supabase, data.user.id));
     router.refresh();
   }
 
@@ -81,7 +107,10 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/cours");
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    router.push(user ? await landingRouteForRole(supabase, user.id) : "/cours");
     router.refresh();
   }
 

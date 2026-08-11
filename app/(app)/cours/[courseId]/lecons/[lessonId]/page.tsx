@@ -43,7 +43,7 @@ export default async function LessonPage({
   const { data: lesson } = await supabase
     .from("lessons")
     .select(
-      "id, titre, type, contenu_markdown, labo_type, labo_config, quiz_questions, piece_jointe_url, piece_jointe_nom",
+      "id, titre, type, contenu_markdown, labo_type, labo_config, quiz_questions, piece_jointe_url, piece_jointe_nom, piece_jointe_telechargeable",
     )
     .eq("id", lessonId)
     .single();
@@ -279,7 +279,12 @@ export default async function LessonPage({
             </p>
           )}
 
-          {lesson.piece_jointe_url && (
+          {/* Masque a l'apprenant si le professeur a decoche l'autorisation
+              (voir LessonRow.tsx) - toujours visible au staff, qui gere le
+              document. Rappel (voir la migration) : ce n'est pas une vraie
+              protection technique, le bucket de stockage est public - juste
+              un controle d'affichage cote application. */}
+          {lesson.piece_jointe_url && (isStaff || lesson.piece_jointe_telechargeable) && (
             <a
               href={lesson.piece_jointe_url}
               target="_blank"

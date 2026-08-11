@@ -1,6 +1,15 @@
 import JSZip from "jszip";
 
-const MAX_CHARS = 15000;
+// 100 000 caracteres (~25k tokens) : releve de 15 000 (2026-08-11), verifie
+// insuffisant sur un echantillon reel de 30 supports de cours fournis par
+// l'utilisateur (institut booster) - plusieurs documents texte depassaient
+// deja largement 15 000 caracteres a eux seuls (ex: 48 241 caracteres pour
+// un cours de beton arme de 72 pages, 266 375 pour un cours d'OGC de 152
+// pages), ce qui coupait la tres grande majorite du contenu avant meme
+// d'atteindre l'IA. Toujours un plafond (pas illimite) pour rester
+// raisonnable en cout/latence d'appel Claude - documents plus longs encore
+// tronques avec l'avertissement `truncated` existant.
+const MAX_CHARS = 100000;
 
 function truncate(text: string): { text: string; truncated: boolean } {
   const trimmed = text.trim();
@@ -31,6 +40,11 @@ async function extractPptxText(buffer: Buffer): Promise<string> {
   return slideTexts.map((t, i) => `--- Diapositive ${i + 1} ---\n${t}`).join("\n\n");
 }
 
+// DOCX et PPTX uniquement (formats bureautiques texte/XML) - PDF et images
+// passent desormais par buildNativeDocumentBlock ci-dessous plutot que par
+// extraction de texte (voir sa doc pour le pourquoi : beaucoup de vrais
+// supports de cours sont des PDF scannes, ou l'extraction de texte ne
+// recupere presque rien).
 export async function extractDocumentText(
   file: File,
 ): Promise<{ text: string; truncated: boolean } | { error: string }> {
@@ -38,22 +52,6 @@ export async function extractDocumentText(
   const nameLower = file.name.toLowerCase();
 
   try {
-    if (nameLower.endsWith(".pdf") || file.type === "application/pdf") {
-      // pdfjs-dist (utilise par pdf-parse) attend un global DOMMatrix pour les
-      // transformations de position du texte -- en environnement serverless
-      // (Vercel), le binaire natif @napi-rs/canvas qui le fournirait
-      // normalement n'est pas fiable a charger. Polyfill pur JS a la place.
-      if (typeof (globalThis as { DOMMatrix?: unknown }).DOMMatrix === "undefined") {
-        const { default: DOMMatrixPolyfill } = await import("dommatrix");
-        (globalThis as { DOMMatrix?: unknown }).DOMMatrix = DOMMatrixPolyfill;
-      }
-      const { PDFParse } = await import("pdf-parse");
-      const parser = new PDFParse({ data: buffer });
-      const result = await parser.getText();
-      await parser.destroy();
-      return truncate(result.text);
-    }
-
     if (nameLower.endsWith(".docx") || file.type.includes("wordprocessingml")) {
       const mammoth = await import("mammoth");
       const result = await mammoth.extractRawText({ buffer });
@@ -65,9 +63,50 @@ export async function extractDocumentText(
       return truncate(text);
     }
 
-    return { error: "Format non pris en charge (PDF, DOCX ou PPTX uniquement — .doc/.ppt binaires anciens non supportés)." };
+    return { error: "Format non pris en charge par l'extraction de texte (DOCX ou PPTX uniquement)." };
   } catch (err) {
     console.error("Échec extraction texte document :", err);
     return { error: "Impossible de lire ce document — il est peut-être corrompu ou protégé." };
   }
+}
+
+type ImageMediaType = "image/jpeg" | "image/png" | "image/webp";
+
+const IMAGE_MEDIA_TYPES: Record<string, ImageMediaType> = {
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".webp": "image/webp",
+};
+
+export type NativeDocumentBlock =
+  | { type: "document"; source: { type: "base64"; media_type: "application/pdf"; data: string } }
+  | { type: "image"; source: { type: "base64"; media_type: ImageMediaType; data: string } };
+
+// PDF et images (2026-08-11, demande utilisateur : accepter les vrais
+// supports de cours, dont plusieurs PDF scannes/photographies - verifie
+// reellement sur un echantillon de 30 documents, ex. "COURS MAGISTRAL DE
+// BARRAGES L3.pdf" : 87 pages mais seulement 1849 caracteres de texte
+// extractible via pdf-parse, le reste etant des images de diapositives
+// scannees). Plutot que d'extraire du texte (qui echoue silencieusement sur
+// ce genre de document), le fichier est envoye tel quel a Claude comme bloc
+// "document"/"image" natif : le modele le LIT visuellement (comme un humain
+// feuilletterait un PDF scanne), ce qui fonctionne aussi bien sur du texte
+// natif que sur du contenu scanne/photographie. Limite Claude documentee :
+// 32 Mo par document - le plafond de taille de Server Action (voir
+// next.config.ts, 20mb) est deja plus bas, donc jamais atteinte ici.
+export function buildNativeDocumentBlock(file: File, buffer: Buffer): NativeDocumentBlock | { error: string } {
+  const nameLower = file.name.toLowerCase();
+  const data = buffer.toString("base64");
+
+  if (nameLower.endsWith(".pdf") || file.type === "application/pdf") {
+    return { type: "document", source: { type: "base64", media_type: "application/pdf", data } };
+  }
+
+  const ext = Object.keys(IMAGE_MEDIA_TYPES).find((e) => nameLower.endsWith(e));
+  if (ext) {
+    return { type: "image", source: { type: "base64", media_type: IMAGE_MEDIA_TYPES[ext], data } };
+  }
+
+  return { error: "Format non pris en charge pour la lecture native (PDF, JPG, PNG ou WEBP)." };
 }

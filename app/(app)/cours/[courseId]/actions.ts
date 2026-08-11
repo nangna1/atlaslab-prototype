@@ -242,6 +242,7 @@ export async function createLesson(
     quiz_questions: quizQuestions,
     piece_jointe_url: pieceJointeUrl,
     piece_jointe_nom: pieceJointeNom,
+    piece_jointe_telechargeable: true,
   });
 
   if (error) return { error: error.message };
@@ -353,6 +354,15 @@ export async function updateLesson(
     documentUpdate = { piece_jointe_url: null, piece_jointe_nom: null };
   }
 
+  // La case n'est rendue (voir LessonRow.tsx) que si un document etait deja
+  // present avant cette soumission - la sentinelle distingue "decochee" de
+  // "jamais affichee" (sinon un tout premier televersement serait masque
+  // par defaut sans que personne ait rien decoche).
+  const telechargeableUpdate =
+    formData.get("piece_jointe_telechargeable_present") === "1"
+      ? { piece_jointe_telechargeable: formData.get("piece_jointe_telechargeable") === "on" }
+      : {};
+
   const { error } = await supabase
     .from("lessons")
     .update({
@@ -363,6 +373,7 @@ export async function updateLesson(
       labo_config: laboConfig,
       quiz_questions: quizQuestions,
       ...documentUpdate,
+      ...telechargeableUpdate,
     })
     .eq("id", lessonId);
 

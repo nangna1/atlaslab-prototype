@@ -98,15 +98,35 @@ export default async function AppSidebar() {
           { href: "/securite", label: "Sécurité" },
           { href: "/profil", label: "Profil" },
         ]
-      : [
-          { href: "/cours", label: "Mes cours" },
-          { href: "/emploi-du-temps", label: "Emploi du temps" },
-          offresLink,
-          messagesLink,
-          { href: "/securite", label: "Sécurité" },
-          { href: "/profil", label: "Profil" },
-          ...(canManageComptes ? [{ href: "/admin", label: "Admin" } as NavLink] : []),
-        ];
+      : role === "admin_tenant" || role === "super_admin"
+        ? [
+            // admin_tenant/super_admin ont deja de vrais tableaux de bord
+            // ailleurs (2026-08-11) - "Tableau de bord" y pointe directement
+            // plutot que vers /cours (liste generique), qui reste accessible
+            // separement via "Mes cours" (gestion des cours, inchangee).
+            {
+              href: role === "super_admin" ? "/admin/etablissements" : "/admin/tableau-de-bord",
+              label: "Tableau de bord",
+            },
+            { href: "/cours", label: "Mes cours" },
+            { href: "/emploi-du-temps", label: "Emploi du temps" },
+            offresLink,
+            messagesLink,
+            { href: "/securite", label: "Sécurité" },
+            { href: "/profil", label: "Profil" },
+            { href: "/admin", label: "Admin" },
+          ]
+        : [
+            // professeur : /cours EST son tableau de bord (ses cours, ses
+            // eleves, ses devoirs a corriger - voir app/(app)/cours/page.tsx).
+            { href: "/cours", label: "Tableau de bord" },
+            { href: "/emploi-du-temps", label: "Emploi du temps" },
+            offresLink,
+            messagesLink,
+            { href: "/securite", label: "Sécurité" },
+            { href: "/profil", label: "Profil" },
+            ...(canManageComptes ? [{ href: "/admin", label: "Admin" } as NavLink] : []),
+          ];
 
   const initials = (profile?.nom ?? "?")
     .split(" ")

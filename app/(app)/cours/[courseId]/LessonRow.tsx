@@ -24,6 +24,7 @@ type Lesson = {
   quiz_questions: { question: string; options: string[]; correct: number }[] | null;
   piece_jointe_url?: string | null;
   piece_jointe_nom?: string | null;
+  piece_jointe_telechargeable?: boolean;
 };
 
 export default function LessonRow({ courseId, lesson }: { courseId: string; lesson: Lesson }) {
@@ -141,10 +142,27 @@ export default function LessonRow({ courseId, lesson }: { courseId: string; less
           />
         </label>
         {lesson.piece_jointe_url && (
-          <label className="flex items-center gap-2 text-sm text-gray-600">
-            <input type="checkbox" name="remove_document" />
-            Supprimer le document joint
-          </label>
+          <>
+            <label className="flex items-center gap-2 text-sm text-gray-600">
+              <input type="checkbox" name="remove_document" />
+              Supprimer le document joint
+            </label>
+            {/* Sentinelle (voir actions.ts, updateLesson) : distingue "case
+                decochee" de "case jamais affichee" (elle n'apparait que s'il
+                y avait deja un document AVANT cette soumission) - sans elle,
+                un premier televersement dans ce meme formulaire serait
+                masque aux apprenants par defaut sans que personne ait
+                decoche quoi que ce soit. */}
+            <input type="hidden" name="piece_jointe_telechargeable_present" value="1" />
+            <label className="flex items-center gap-2 text-sm text-gray-600">
+              <input
+                type="checkbox"
+                name="piece_jointe_telechargeable"
+                defaultChecked={lesson.piece_jointe_telechargeable ?? true}
+              />
+              Autoriser les apprenants à voir ce document (sinon il reste masqué pour eux)
+            </label>
+          </>
         )}
         <div className="flex gap-2">
           <button type="submit" disabled={pending} className="btn-primary">

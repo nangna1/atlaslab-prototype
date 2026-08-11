@@ -11,6 +11,7 @@ import {
   getUpcomingAssignments,
   getWeekAgenda,
 } from "@/lib/learner-dashboard-data";
+import { getCoursEnseignes, getDevoirsACorriger, getProfDashboardStats } from "@/lib/professeur-dashboard-data";
 
 export default async function CoursListPage({
   searchParams,
@@ -38,7 +39,6 @@ export default async function CoursListPage({
   if (profile?.role === "parent") redirect("/portail-parent");
 
   const isApprenant = profile?.role === "apprenant";
-  const isStaff = ["professeur", "admin_tenant", "super_admin"].includes(profile?.role ?? "");
 
   const { data: tenant } = profile?.tenant_id
     ? await supabase.from("tenants").select("couleur_primaire").eq("id", profile.tenant_id).single()
@@ -227,10 +227,135 @@ export default async function CoursListPage({
     );
   }
 
-  // Branche staff (professeur/admin_tenant/super_admin) : comportement
-  // identique a avant le redesign (creation/import de cours, liste complete,
-  // recherche), seule l'ancienne barre horizontale de nav a disparu (la
-  // sidebar la remplace, voir app/(app)/AppSidebar.tsx).
+  // Branche professeur (2026-08-11, demande utilisateur : "un tableau de
+  // bord adapte a chaque utilisateur") : avant ce redesign, un professeur
+  // partageait exactement la meme liste generique que admin_tenant/
+  // super_admin (voir branche "staff" ci-dessous) - aucune vue personnelle.
+  if (profile?.role === "professeur") {
+    const cours = await getCoursEnseignes(supabase, user.id);
+    const [stats, devoirsACorriger] = await Promise.all([
+      getProfDashboardStats(supabase, user.id, cours),
+      getDevoirsACorriger(supabase, user.id, cours),
+    ]);
+    const prenom = (profile?.nom ?? "").split(" ")[0] || "";
+
+    return (
+      <div
+        className="px-5 pt-6 pb-10 lg:px-10 lg:pt-9 lg:pb-14"
+        style={{ "--brand": tenant?.couleur_primaire || undefined } as React.CSSProperties}
+      >
+        <div className="mb-[30px]">
+          <p className="mb-2 text-[13px] font-semibold" style={{ color: "var(--accent)" }}>
+            Bonjour {prenom}
+          </p>
+          <h1 className="text-[38px] leading-tight font-extrabold tracking-[-0.03em]">Vos cours et vos élèves</h1>
+        </div>
+
+        <div className="mb-7 grid grid-cols-2 gap-4 md:grid-cols-4">
+          {[
+            { label: "Cours enseignés", value: String(stats.coursCount) },
+            { label: "Élèves", value: String(stats.elevesCount) },
+            { label: "Devoirs à corriger", value: String(stats.devoirsACorrigerCount) },
+            { label: "Séances à venir", value: String(stats.seancesAVenirCount) },
+          ].map((s) => (
+            <div key={s.label} className="card">
+              <p className="mb-3 text-[13px]" style={{ color: "var(--text-muted)" }}>
+                {s.label}
+              </p>
+              <p className="text-[32px] font-extrabold tracking-[-0.02em]">{s.value}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid items-start gap-6 lg:grid-cols-[1.6fr_1fr]">
+          <div>
+            <h2 className="mb-4 text-xl font-extrabold">Mes cours</h2>
+            <div className="flex flex-col gap-3">
+              {cours.length === 0 && (
+                <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                  Vous n&apos;enseignez encore aucun cours - créez-en un ci-dessous.
+                </p>
+              )}
+              {cours.map((c) => (
+                <Link
+                  key={c.id}
+                  href={`/cours/${c.id}`}
+                  className="grid grid-cols-[56px_1fr_auto] items-center gap-[18px] rounded-2xl border p-[18px_20px] transition-colors"
+                  style={{ borderColor: "var(--line)", background: "var(--surface)" }}
+                >
+                  <span
+                    className="flex h-14 w-14 items-center justify-center rounded-xl text-[11px] font-bold tracking-[0.06em]"
+                    style={{ background: "var(--line)", color: "var(--accent)" }}
+                  >
+                    {c.totalEleves}
+                  </span>
+                  <span className="block min-w-0">
+                    <span className="mb-1 block text-xs" style={{ color: "var(--text-muted)" }}>
+                      {c.filiere} · {c.totalLecons} leçon(s) · {c.totalEleves} élève(s)
+                    </span>
+                    <span className="mb-2.5 block truncate text-[17px] font-bold">{c.titre}</span>
+                    <span
+                      className="block h-1.5 max-w-[420px] overflow-hidden rounded-full"
+                      style={{ background: "var(--line)" }}
+                    >
+                      <span
+                        className="block h-full rounded-full"
+                        style={{ width: `${c.progressionMoyenne}%`, background: "linear-gradient(90deg,var(--accent-deep),var(--accent))" }}
+                      />
+                    </span>
+                  </span>
+                  <span className="text-right">
+                    <span className="block text-xl font-extrabold">{c.progressionMoyenne}%</span>
+                    <span className="mt-1 block text-xs" style={{ color: "var(--text-muted)" }}>
+                      progression moy.
+                    </span>
+                  </span>
+                </Link>
+              ))}
+            </div>
+
+            <div className="mt-8 flex flex-col gap-4">
+              <CreateCourseForm />
+              <ImportCourseForm />
+            </div>
+          </div>
+
+          <div className="card">
+            <h3 className="mb-3.5 text-[15px] font-bold">À corriger</h3>
+            {devoirsACorriger.length === 0 ? (
+              <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                Rien à corriger pour le moment.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {devoirsACorriger.map((d) => (
+                  <Link
+                    key={d.submissionId}
+                    href={`/cours/${d.courseId}/lecons/${d.lessonId}`}
+                    className="block border-b pb-3 text-[13px] last:border-b-0 last:pb-0"
+                    style={{ borderColor: "var(--line-3)" }}
+                  >
+                    <span className="block font-semibold">{d.eleveNom}</span>
+                    <span style={{ color: "var(--text-muted)" }}>
+                      {d.assignmentTitre} · {d.courseTitre}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Branche staff (admin_tenant/super_admin) : comportement identique a
+  // avant le redesign (creation/import de cours, liste complete, recherche),
+  // seule l'ancienne barre horizontale de nav a disparu (la sidebar la
+  // remplace, voir app/(app)/AppSidebar.tsx). Le professeur a sa propre
+  // branche ci-dessus depuis 2026-08-11 ; isStaff reste utilise plus bas
+  // uniquement pour le formulaire de creation/import (donc toujours vrai
+  // ici, admin_tenant/super_admin).
   const { data: allCourses } = await supabase
     .from("courses")
     .select("id, titre, filiere, modules(id)")
@@ -246,12 +371,10 @@ export default async function CoursListPage({
     >
       <h1 className="mb-6 text-2xl font-bold">Mes cours</h1>
 
-      {isStaff && (
-        <div className="mb-8 flex flex-col gap-4">
-          <CreateCourseForm />
-          <ImportCourseForm />
-        </div>
-      )}
+      <div className="mb-8 flex flex-col gap-4">
+        <CreateCourseForm />
+        <ImportCourseForm />
+      </div>
 
       <form method="get" className="mb-6">
         <input

@@ -46,8 +46,10 @@ export default function ImportCourseForm() {
       <div>
         <p className="text-sm font-medium text-gray-700">Générer un cours avec l&apos;IA</p>
         <p className="mt-1 text-xs text-gray-500">
-          À partir d&apos;un document déjà préparé (PDF ou Word .docx ou PowerPoint .pptx) — l&apos;IA le
-          découpe en modules et leçons. Résultat à relire et corriger après import.{" "}
+          À partir d&apos;un document déjà préparé (PDF, photo/scan JPG ou PNG, Word .docx ou PowerPoint
+          .pptx — jusqu&apos;à 20 Mo) — l&apos;IA le découpe en modules et leçons. Les PDF et images sont lus
+          directement par l&apos;IA (fonctionne aussi sur un cours scanné ou photographié, pas besoin de texte
+          numérique). Résultat à relire et corriger après import.{" "}
           <Link href="/cours/modele-import" className="text-indigo-600 hover:underline">
             Voir un modèle de document à reproduire
           </Link>
@@ -58,7 +60,7 @@ export default function ImportCourseForm() {
         <input
           name="document"
           type="file"
-          accept=".pdf,.docx,.pptx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+          accept=".pdf,.docx,.pptx,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation"
           required
           className="input w-auto flex-1"
         />

@@ -55,6 +55,7 @@ const SIGNATURES = [
   ["20260805000000_paiement_en_ligne_cinetpay.sql", "paiements_frais_transactions", null],
   ["20260806000000_tenant_paiement_config.sql", "tenant_paiement_config", null],
   ["20260807000000_rate_limit_attempts.sql", "rate_limit_attempts", null],
+  ["20260811000000_piece_jointe_telechargement.sql", "lessons", "piece_jointe_telechargeable"],
 ];
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
