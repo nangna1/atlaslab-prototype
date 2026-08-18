@@ -7,6 +7,12 @@ multi-établissement (multi-tenant). Voir la stratégie complète dans le worksp
 - `2026-07-17_architecture-technique_atlaslab.md`
 - `2026-07-17_messages-prospection_atlaslab.md`
 
+Guides d'utilisation (contenu, pas de code) dans [`docs/`](./docs) :
+[`Guide-Utilisation-AtlasLab.pdf`](./docs/Guide-Utilisation-AtlasLab.pdf) et
+[`Guide-Utilisation-Par-Role-AtlasLab.pdf`](./docs/Guide-Utilisation-Par-Role-AtlasLab.pdf)
+(édition du 10 août 2026 — **à rafraîchir** : ne couvre pas encore les tableaux de bord par rôle
+ni l'assistant IA d'aide à l'utilisation, ajoutés depuis).
+
 ## Démarrage
 
 Nécessite un projet Supabase réel (voir `.env.local`, non versionné — variables détaillées
