@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { importCourse, generateCourseFromDocument, type ImportCourseState, type GenerateCourseState } from "./actions";
 import { COURSE_TEMPLATES } from "@/lib/course-templates";
+import { MAX_FILE_SIZE_MB, MAX_FILE_SIZE_BYTES, MAX_PDF_PAGES, formatFileSize } from "@/lib/document-limits";
 
 const initialState: ImportCourseState = {};
 const initialGenerateState: GenerateCourseState = {};
@@ -11,6 +12,27 @@ const initialGenerateState: GenerateCourseState = {};
 export default function ImportCourseForm() {
   const [state, formAction, pending] = useActionState(importCourse, initialState);
   const [genState, genFormAction, genPending] = useActionState(generateCourseFromDocument, initialGenerateState);
+  // Verification de la taille au choix du fichier, avant tout envoi : un
+  // fichier au-dela du plafond de body des Server Actions Next.js (voir
+  // lib/document-limits.ts) ne produit pas une erreur propre renvoyee par
+  // generateCourseFromDocument mais un ecran generique "Application error"
+  // cote client, le framework rejetant la requete avant meme d'atteindre
+  // l'action. La seule parade fiable est d'empecher l'envoi en amont.
+  const [sizeError, setSizeError] = useState<string | null>(null);
+
+  function handleDocumentChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) {
+      setSizeError(null);
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      setSizeError(`Document trop volumineux (${formatFileSize(file.size)}) — ${MAX_FILE_SIZE_MB} Mo maximum.`);
+      e.target.value = "";
+    } else {
+      setSizeError(null);
+    }
+  }
 
   return (
     <div className="card-dashed flex flex-col gap-4">
@@ -47,9 +69,9 @@ export default function ImportCourseForm() {
         <p className="text-sm font-medium text-gray-700">Générer un cours avec l&apos;IA</p>
         <p className="mt-1 text-xs text-gray-500">
           À partir d&apos;un document déjà préparé (PDF, photo/scan JPG ou PNG, Word .docx ou PowerPoint
-          .pptx — jusqu&apos;à 20 Mo) — l&apos;IA le découpe en modules et leçons. Les PDF et images sont lus
-          directement par l&apos;IA (fonctionne aussi sur un cours scanné ou photographié, pas besoin de texte
-          numérique). Résultat à relire et corriger après import.{" "}
+          .pptx — {MAX_FILE_SIZE_MB} Mo et {MAX_PDF_PAGES} pages maximum pour un PDF) — l&apos;IA le découpe en
+          modules et leçons. Les PDF et images sont lus directement par l&apos;IA (fonctionne aussi sur un cours
+          scanné ou photographié, pas besoin de texte numérique). Résultat à relire et corriger après import.{" "}
           <Link href="/cours/modele-import" className="text-indigo-600 hover:underline">
             Voir un modèle de document à reproduire
           </Link>
@@ -62,13 +84,15 @@ export default function ImportCourseForm() {
           type="file"
           accept=".pdf,.docx,.pptx,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation"
           required
+          onChange={handleDocumentChange}
           className="input w-auto flex-1"
         />
-        <button type="submit" disabled={genPending} className="btn-secondary">
+        <button type="submit" disabled={genPending || !!sizeError} className="btn-secondary">
           {genPending ? "Génération... (peut prendre une minute)" : "Générer le cours"}
         </button>
       </form>
 
+      {sizeError && <p className="text-sm text-red-600">{sizeError}</p>}
       {genState.error && <p className="text-sm text-red-600">{genState.error}</p>}
     </div>
   );

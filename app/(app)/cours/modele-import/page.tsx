@@ -1,5 +1,6 @@
 import Link from "next/link";
 import PrintButton from "./PrintButton";
+import { MAX_FILE_SIZE_MB, MAX_PDF_PAGES } from "@/lib/document-limits";
 
 export const metadata = {
   title: "Modèle de cours pour import IA — AtlasLab",
@@ -48,8 +49,8 @@ export default function ModeleImportPage() {
           <li>
             <strong>3. Un document raisonnablement court.</strong> Pour un Word ou PowerPoint, seuls les
             ~100 000 premiers caractères sont pris en compte (plusieurs dizaines de pages) — au-delà, la fin
-            de votre document est ignorée sans erreur bloquante. Pour un PDF ou une photo/scan, la limite
-            réelle est la taille du fichier (20 Mo maximum) plutôt qu&apos;un nombre de caractères. Pour un
+            de votre document est ignorée sans erreur bloquante. Pour un PDF, {MAX_FILE_SIZE_MB} Mo et{" "}
+            {MAX_PDF_PAGES} pages maximum ; pour une photo/scan, {MAX_FILE_SIZE_MB} Mo maximum. Pour un
             cours plus long que ces limites, scindez-le en plusieurs documents et importez-les comme
             plusieurs cours.
           </li>
@@ -69,8 +70,9 @@ export default function ModeleImportPage() {
       <section className="mb-10">
         <h2 className="mb-3 text-lg font-semibold text-gray-900">Formats acceptés</h2>
         <p className="text-sm leading-relaxed text-gray-700">
-          PDF (.pdf), photo/scan (.jpg, .png, .webp), Word (.docx) ou PowerPoint (.pptx), jusqu&apos;à 20 Mo.
-          Les anciens formats binaires (.doc, .ppt) ne sont pas pris en charge.
+          PDF (.pdf), photo/scan (.jpg, .png, .webp), Word (.docx) ou PowerPoint (.pptx), jusqu&apos;à{" "}
+          {MAX_FILE_SIZE_MB} Mo ({MAX_PDF_PAGES} pages maximum pour un PDF). Les anciens formats binaires
+          (.doc, .ppt) ne sont pas pris en charge.
         </p>
       </section>
 

@@ -1,4 +1,5 @@
 import JSZip from "jszip";
+import { PDFParse } from "pdf-parse";
 
 // 100 000 caracteres (~25k tokens) : releve de 15 000 (2026-08-11), verifie
 // insuffisant sur un echantillon reel de 30 supports de cours fournis par
@@ -67,6 +68,24 @@ export async function extractDocumentText(
   } catch (err) {
     console.error("Échec extraction texte document :", err);
     return { error: "Impossible de lire ce document — il est peut-être corrompu ou protégé." };
+  }
+}
+
+// Compte les pages d'un PDF sans en extraire le texte (metadonnee
+// structurelle, fiable meme sur un PDF scanne/photographie sans texte
+// exploitable - contrairement a l'extraction abandonnee plus haut). Sert
+// uniquement a la validation MAX_PDF_PAGES avant l'appel a Claude - un
+// echec de comptage ne doit pas bloquer l'import (retourne null, l'appelant
+// laisse alors passer et compte sur le controle de l'API Claude elle-meme).
+export async function countPdfPages(buffer: Buffer): Promise<number | null> {
+  try {
+    const parser = new PDFParse({ data: buffer });
+    const info = await parser.getInfo();
+    await parser.destroy();
+    return info.total ?? null;
+  } catch (err) {
+    console.error("Échec comptage des pages PDF :", err);
+    return null;
   }
 }
 

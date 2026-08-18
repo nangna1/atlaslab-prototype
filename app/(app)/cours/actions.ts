@@ -6,7 +6,8 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { parseCourseTemplate, insertCourseFromTemplate } from "@/lib/course-import";
 import { COURSE_TEMPLATES } from "@/lib/course-templates";
-import { extractDocumentText, buildNativeDocumentBlock, type NativeDocumentBlock } from "@/lib/document-text";
+import { extractDocumentText, buildNativeDocumentBlock, countPdfPages, type NativeDocumentBlock } from "@/lib/document-text";
+import { MAX_FILE_SIZE_MB, MAX_FILE_SIZE_BYTES, MAX_PDF_PAGES, formatFileSize } from "@/lib/document-limits";
 
 const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }) : null;
 
@@ -208,6 +209,16 @@ export async function generateCourseFromDocument(
   const file = formData.get("document") as File | null;
   if (!file || file.size === 0) return { error: "Choisissez un document (PDF, image, DOCX ou PPTX)." };
 
+  // Filet de securite cote serveur : le formulaire (ImportCourseForm) bloque
+  // deja l'envoi d'un fichier trop lourd avant meme cette requete (voir sa
+  // doc pour pourquoi c'est indispensable, pas juste une redondance), mais
+  // un appel direct a cette action (hors formulaire) doit recevoir la meme
+  // erreur propre plutot que de reposer uniquement sur le plafond de body
+  // Next.js.
+  if (file.size > MAX_FILE_SIZE_BYTES) {
+    return { error: `Document trop volumineux (${formatFileSize(file.size)}) — ${MAX_FILE_SIZE_MB} Mo maximum.` };
+  }
+
   const instructions =
     `Structure ce document pédagogique{NOM} en cours AtlasLab : découpe-le en modules cohérents puis en ` +
     `leçons, en respectant l'ordre du document. Pour chaque leçon de type "contenu", écris un résumé ` +
@@ -228,6 +239,16 @@ export async function generateCourseFromDocument(
 
   if (isNativelyReadable) {
     const buffer = Buffer.from(await file.arrayBuffer());
+
+    if (nameLower.endsWith(".pdf")) {
+      const pageCount = await countPdfPages(buffer);
+      if (pageCount !== null && pageCount > MAX_PDF_PAGES) {
+        return {
+          error: `Document trop long (${pageCount} pages) — ${MAX_PDF_PAGES} pages maximum. Scindez-le en plusieurs parties.`,
+        };
+      }
+    }
+
     const block = buildNativeDocumentBlock(file, buffer);
     if ("error" in block) return { error: block.error };
     userContent = [block, { type: "text", text: instructions.replace("{NOM}", ` (${file.name})`) }];
