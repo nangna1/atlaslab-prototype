@@ -69,6 +69,10 @@ via RLS + claims JWT).
 **Communication**
 - Messagerie interne (professeur ↔ élève), notifications in-app + email, notifications WhatsApp
   (Meta Cloud API — alertes séance/devoir/message, réception de devoirs par photo via webhook).
+- Assistant IA d'aide à l'utilisation (bouton flottant, tous rôles connectés) : contextuel à la
+  page courante (connaît le module — cours, labo, devoirs, emploi du temps, admin...), adapte son
+  registre au rôle, historique de conversation personnel persisté (`assistant_messages`, effaçable
+  depuis le panneau).
 - Fondation multilingue : français / anglais / arabe (RTL).
 
 **Sécurité & fiabilité**
@@ -128,7 +132,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 RESEND_API_KEY=                    # email (notifications, relances)
 NEXT_PUBLIC_SENTRY_DSN=            # monitoring d'erreurs
-ANTHROPIC_API_KEY=                 # génération de cours par IA
+ANTHROPIC_API_KEY=                 # génération de cours par IA + assistant d'aide à l'utilisation
 CERT_VERIFICATION_SECRET=          # HMAC des certificats (QR code)
 WHATSAPP_TOKEN=
 WHATSAPP_PHONE_ID=

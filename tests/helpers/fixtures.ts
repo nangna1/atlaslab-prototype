@@ -129,6 +129,15 @@ export function decodeJwtPayload(accessToken: string): Record<string, unknown> {
 }
 
 export async function cleanupAll(admin: SupabaseClient, state: CreatedState) {
+  // assistant_messages.user_id n'a pas de cascade (voir
+  // 20260809000000_assistant_messages.sql) : a supprimer avant les deux
+  // boucles de suppression de `users` ci-dessous (tenant ET super_admin sans
+  // tenant), meme raison que audit_log/paiements_frais plus bas -- sinon un
+  // utilisateur de test ayant utilise l'assistant reste bloque en base,
+  // orphelin avec son tenant.
+  for (const id of state.userIds) {
+    await admin.from("assistant_messages").delete().eq("user_id", id);
+  }
   for (const tenantId of state.tenantIds) {
     // audit_log.acteur_id n'a pas de cascade : un test qui appelle une VRAIE
     // server action (logAudit) plutot qu'un insert direct laisserait sinon

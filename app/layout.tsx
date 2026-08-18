@@ -4,8 +4,10 @@ import "./globals.css";
 import RegisterServiceWorker from "./RegisterServiceWorker";
 import OfflineStatusBanner from "./OfflineStatusBanner";
 import DemoReturnBanner from "./DemoReturnBanner";
+import AiAssistant from "./AiAssistant";
 import { getLocale } from "@/lib/i18n/get-locale";
 import { isRtl } from "@/lib/i18n/config";
+import { createClient } from "@/lib/supabase/server";
 
 // Redesign 2026-08-10 : police unique Manrope (voir handoff design) pour
 // titres et corps de texte - fontDisplay et fontBody pointent maintenant
@@ -61,6 +63,22 @@ export default async function RootLayout({
 }>) {
   const locale = await getLocale();
 
+  // Role de l'utilisateur connecte, pour l'assistant IA (app/AiAssistant.tsx)
+  // -- null si non connecte, auquel cas le composant ne s'affiche pas. Meme
+  // requete que les autres pages authentifiees, reduite au seul champ
+  // necessaire ici. Port depuis la branche assistant-ia-aide-utilisation
+  // (2026-08-18) : logique inchangee, seule la police du layout racine
+  // reste celle du redesign Manrope deja en place, pas celle de la branche.
+  let role: string | null = null;
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) {
+    const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single();
+    role = profile?.role ?? null;
+  }
+
   return (
     <html
       lang={locale}
@@ -71,6 +89,7 @@ export default async function RootLayout({
         <DemoReturnBanner />
         <OfflineStatusBanner />
         {children}
+        <AiAssistant role={role} locale={locale} />
         <RegisterServiceWorker />
       </body>
     </html>
