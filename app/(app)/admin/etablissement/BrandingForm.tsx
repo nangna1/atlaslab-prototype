@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { updateBranding, type UpdateBrandingState } from "./actions";
+import { MAX_FILE_SIZE_MB, MAX_FILE_SIZE_BYTES, formatFileSize } from "@/lib/document-limits";
 
 const initialState: UpdateBrandingState = {};
 
@@ -27,6 +28,24 @@ export default function BrandingForm({
   currentCertificatModele: string;
 }) {
   const [state, formAction, pending] = useActionState(updateBranding, initialState);
+  // Meme garde-fou que les autres formulaires de televersement (voir
+  // lib/document-limits.ts) : bloque l'envoi avant meme qu'un fichier trop
+  // lourd ne declenche le crash generique cote client.
+  const [sizeError, setSizeError] = useState<string | null>(null);
+
+  function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) {
+      setSizeError(null);
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      setSizeError(`Logo trop volumineux (${formatFileSize(file.size)}) — ${MAX_FILE_SIZE_MB} Mo maximum.`);
+      e.target.value = "";
+    } else {
+      setSizeError(null);
+    }
+  }
 
   return (
     <form action={formAction} className="card flex max-w-sm flex-col gap-4">
@@ -42,8 +61,9 @@ export default function BrandingForm({
         </div>
       )}
       <label>
-        <span className="label">Nouveau logo (PNG, JPG, SVG)</span>
-        <input type="file" name="logo" accept="image/*" className="input" />
+        <span className="label">Nouveau logo (PNG, JPG, SVG — {MAX_FILE_SIZE_MB} Mo maximum)</span>
+        <input type="file" name="logo" accept="image/*" onChange={handleLogoChange} className="input" />
+        {sizeError && <span className="text-sm text-red-600">{sizeError}</span>}
       </label>
       <label>
         <span className="label">Couleur de marque</span>
@@ -92,7 +112,7 @@ export default function BrandingForm({
 
       {state.error && <p className="text-sm text-red-600">{state.error}</p>}
       {state.success && <p className="text-sm text-green-700">Enregistré.</p>}
-      <button type="submit" disabled={pending} className="btn-primary">
+      <button type="submit" disabled={pending || !!sizeError} className="btn-primary">
         {pending ? "Enregistrement..." : "Enregistrer"}
       </button>
     </form>

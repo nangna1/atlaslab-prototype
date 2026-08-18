@@ -8,6 +8,7 @@ import { parseAccountsCsv } from "@/lib/csv";
 import { logAudit } from "@/lib/audit";
 import { sendEmail } from "@/lib/email";
 import { verifierLimiteEssaiPourNouveauCompte, getLimiteEssai, DUREE_ESSAI_JOURS, LIMITE_COMPTES_ESSAI } from "@/lib/tenant-plan";
+import { MAX_FILE_SIZE_MB, MAX_FILE_SIZE_BYTES, formatFileSize } from "@/lib/document-limits";
 
 export type ActionState = { error?: string; success?: boolean };
 
@@ -123,6 +124,12 @@ export async function importAccounts(
   const file = formData.get("fichier");
   if (!(file instanceof File) || file.size === 0) {
     return { error: "Choisissez un fichier CSV." };
+  }
+  // Risque bien plus faible qu'un PDF/document joint (un CSV de comptes
+  // reste minuscule en pratique, deja borne par MAX_IMPORT_ROWS ci-dessous)
+  // mais meme filet de securite pour completude (voir lib/document-limits.ts).
+  if (file.size > MAX_FILE_SIZE_BYTES) {
+    return { error: `Fichier trop volumineux (${formatFileSize(file.size)}) — ${MAX_FILE_SIZE_MB} Mo maximum.` };
   }
 
   const text = await file.text();

@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { sendEmail } from "@/lib/email";
 import { sendWhatsAppTemplate } from "@/lib/whatsapp";
 import { generateJaasToken, jaasRoomName, isJaasConfigured } from "@/lib/jaas";
+import { MAX_FILE_SIZE_MB, MAX_FILE_SIZE_BYTES, formatFileSize } from "@/lib/document-limits";
 
 async function requireStaff() {
   const supabase = await createClient();
@@ -155,6 +156,15 @@ async function uploadLessonDocument(
   tenantId: string,
   file: File,
 ): Promise<{ url: string; nom: string } | { error: string }> {
+  // Meme risque que generateCourseFromDocument (voir lib/document-limits.ts)
+  // : un fichier au-dela du plafond de body des Server Actions Next.js
+  // produit un crash generique cote client plutot qu'une erreur propre.
+  // Filet de securite serveur ; AddLessonForm/LessonRow bloquent deja
+  // l'envoi en amont cote client (voir handleDocumentChange).
+  if (file.size > MAX_FILE_SIZE_BYTES) {
+    return { error: `Document trop volumineux (${formatFileSize(file.size)}) — ${MAX_FILE_SIZE_MB} Mo maximum.` };
+  }
+
   const ext = file.name.split(".").pop() || "bin";
   const path = `${tenantId}/${randomUUID()}.${ext}`;
   const { error } = await supabase.storage

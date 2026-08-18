@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import Link from "next/link";
 import { updateLesson, deleteLesson, type UpdateLessonState } from "./actions";
 import QuizQuestionsEditor from "./QuizQuestionsEditor";
+import { MAX_FILE_SIZE_MB, MAX_FILE_SIZE_BYTES, formatFileSize } from "@/lib/document-limits";
 
 const initialState: UpdateLessonState = {};
 
@@ -33,6 +34,24 @@ export default function LessonRow({ courseId, lesson }: { courseId: string; less
   const [type, setType] = useState(lesson.type);
   const [laboType, setLaboType] = useState(lesson.labo_type ?? "eecircuit");
   const [handledSuccess, setHandledSuccess] = useState(state.success);
+  // Meme garde-fou qu'AddLessonForm (voir lib/document-limits.ts) : bloque
+  // l'envoi avant meme qu'un fichier trop lourd ne declenche le crash
+  // generique cote client.
+  const [sizeError, setSizeError] = useState<string | null>(null);
+
+  function handleDocumentChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) {
+      setSizeError(null);
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      setSizeError(`Document trop volumineux (${formatFileSize(file.size)}) — ${MAX_FILE_SIZE_MB} Mo maximum.`);
+      e.target.value = "";
+    } else {
+      setSizeError(null);
+    }
+  }
 
   if (state.success !== handledSuccess) {
     setHandledSuccess(state.success);
@@ -125,7 +144,9 @@ export default function LessonRow({ courseId, lesson }: { courseId: string; less
         {type === "quiz" && <QuizQuestionsEditor initialQuestions={lesson.quiz_questions ?? []} />}
         <label>
           <span className="label">
-            {lesson.piece_jointe_url ? "Remplacer le document joint" : "Document joint (PDF, Word, PPT)"}
+            {lesson.piece_jointe_url
+              ? `Remplacer le document joint (${MAX_FILE_SIZE_MB} Mo maximum)`
+              : `Document joint (PDF, Word, PPT — ${MAX_FILE_SIZE_MB} Mo maximum)`}
           </span>
           {lesson.piece_jointe_url && (
             <p className="mb-1 text-sm">
@@ -138,8 +159,10 @@ export default function LessonRow({ courseId, lesson }: { courseId: string; less
             name="document"
             type="file"
             accept=".pdf,.doc,.docx,.ppt,.pptx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+            onChange={handleDocumentChange}
             className="input"
           />
+          {sizeError && <span className="text-sm text-red-600">{sizeError}</span>}
         </label>
         {lesson.piece_jointe_url && (
           <>
@@ -165,7 +188,7 @@ export default function LessonRow({ courseId, lesson }: { courseId: string; less
           </>
         )}
         <div className="flex gap-2">
-          <button type="submit" disabled={pending} className="btn-primary">
+          <button type="submit" disabled={pending || !!sizeError} className="btn-primary">
             {pending ? "Enregistrement..." : "Enregistrer"}
           </button>
           <button type="button" onClick={() => setIsEditing(false)} className="btn-secondary">

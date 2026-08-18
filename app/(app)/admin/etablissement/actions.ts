@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { hasSufficientContrast } from "@/lib/color-contrast";
 import { saveTenantCinetPayConfig } from "@/lib/tenant-cinetpay";
 import { logAudit } from "@/lib/audit";
+import { MAX_FILE_SIZE_MB, MAX_FILE_SIZE_BYTES, formatFileSize } from "@/lib/document-limits";
 
 export type UpdateBrandingState = { error?: string; success?: boolean };
 
@@ -57,6 +58,14 @@ export async function updateBranding(
   }
 
   if (logoFile && logoFile.size > 0) {
+    // Meme risque que generateCourseFromDocument (voir lib/document-limits.ts)
+    // : au-dela du plafond de body des Server Actions Next.js, crash
+    // generique cote client plutot qu'une erreur propre. Filet de securite
+    // serveur ; BrandingForm bloque deja l'envoi en amont cote client.
+    if (logoFile.size > MAX_FILE_SIZE_BYTES) {
+      return { error: `Logo trop volumineux (${formatFileSize(logoFile.size)}) — ${MAX_FILE_SIZE_MB} Mo maximum.` };
+    }
+
     const ext = logoFile.name.split(".").pop() || "png";
     const path = `${tenantId}/logo.${ext}`;
     const { error: uploadError } = await supabase.storage
