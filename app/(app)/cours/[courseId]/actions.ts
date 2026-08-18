@@ -1,12 +1,11 @@
 "use server";
 
-import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { sendEmail } from "@/lib/email";
 import { sendWhatsAppTemplate } from "@/lib/whatsapp";
 import { generateJaasToken, jaasRoomName, isJaasConfigured } from "@/lib/jaas";
-import { MAX_FILE_SIZE_MB, MAX_FILE_SIZE_BYTES, formatFileSize } from "@/lib/document-limits";
+import { uploadLessonDocument } from "@/lib/lesson-attachment";
 
 async function requireStaff() {
   const supabase = await createClient();
@@ -146,34 +145,6 @@ export async function deleteModule(formData: FormData): Promise<void> {
 }
 
 export type CreateLessonState = { error?: string };
-
-// Piece jointe de lecon (PDF/Word/PPT deja prepares par le professeur) --
-// aucune tentative de parsing/structuration, juste un fichier stocke tel
-// quel et consultable depuis la lecon. Chemin non lie a l'id de la lecon
-// (peut etre televerse avant sa creation) : dossier tenant_id + nom aleatoire.
-async function uploadLessonDocument(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  tenantId: string,
-  file: File,
-): Promise<{ url: string; nom: string } | { error: string }> {
-  // Meme risque que generateCourseFromDocument (voir lib/document-limits.ts)
-  // : un fichier au-dela du plafond de body des Server Actions Next.js
-  // produit un crash generique cote client plutot qu'une erreur propre.
-  // Filet de securite serveur ; AddLessonForm/LessonRow bloquent deja
-  // l'envoi en amont cote client (voir handleDocumentChange).
-  if (file.size > MAX_FILE_SIZE_BYTES) {
-    return { error: `Document trop volumineux (${formatFileSize(file.size)}) — ${MAX_FILE_SIZE_MB} Mo maximum.` };
-  }
-
-  const ext = file.name.split(".").pop() || "bin";
-  const path = `${tenantId}/${randomUUID()}.${ext}`;
-  const { error } = await supabase.storage
-    .from("lecons-documents")
-    .upload(path, file, { contentType: file.type });
-  if (error) return { error: error.message };
-  const { data } = supabase.storage.from("lecons-documents").getPublicUrl(path);
-  return { url: data.publicUrl, nom: file.name };
-}
 
 export async function createLesson(
   _prevState: CreateLessonState,

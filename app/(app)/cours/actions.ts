@@ -9,6 +9,7 @@ import { parseCourseTemplate, insertCourseFromTemplate } from "@/lib/course-impo
 import { COURSE_TEMPLATES } from "@/lib/course-templates";
 import { extractDocumentText, buildNativeDocumentBlock, countPdfPages, type NativeDocumentBlock } from "@/lib/document-text";
 import { MAX_FILE_SIZE_MB, MAX_FILE_SIZE_BYTES, MAX_PDF_PAGES, formatFileSize } from "@/lib/document-limits";
+import { uploadLessonDocument } from "@/lib/lesson-attachment";
 
 const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }) : null;
 
@@ -330,6 +331,41 @@ export async function generateCourseFromDocument(
     parsed.data,
   );
   if ("error" in result) return { error: result.error };
+
+  // Joint le document source a la premiere lecon du cours genere (2026-08-18,
+  // demande utilisateur suite a un cours de beton arme genere par l'IA dont
+  // les schemas/figures techniques n'apparaissaient pas dans le resume texte
+  // - COURSE_STRUCTURE_TOOL ne produit que du texte, jamais d'images, meme
+  // pour un PDF scanne ou tout est deja "image"). Best-effort : le cours est
+  // deja cree avec succes a ce stade, un echec ici ne doit pas faire
+  // paraitre toute la generation ratee.
+  const { data: firstModule } = await supabase
+    .from("modules")
+    .select("id")
+    .eq("course_id", result.courseId)
+    .order("ordre", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  const { data: firstLesson } = firstModule
+    ? await supabase
+        .from("lessons")
+        .select("id")
+        .eq("module_id", firstModule.id)
+        .order("ordre", { ascending: true })
+        .limit(1)
+        .maybeSingle()
+    : { data: null };
+  if (firstLesson) {
+    const uploaded = await uploadLessonDocument(supabase, callerProfile.tenant_id, file);
+    if ("error" in uploaded) {
+      console.error("Échec pièce jointe document source (generateCourseFromDocument) :", uploaded.error);
+    } else {
+      await supabase
+        .from("lessons")
+        .update({ piece_jointe_url: uploaded.url, piece_jointe_nom: `Document source : ${uploaded.nom}` })
+        .eq("id", firstLesson.id);
+    }
+  }
 
   redirect(`/cours/${result.courseId}`);
 }
