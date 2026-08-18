@@ -10,8 +10,9 @@ multi-établissement (multi-tenant). Voir la stratégie complète dans le worksp
 Guides d'utilisation (contenu, pas de code) dans [`docs/`](./docs) :
 [`Guide-Utilisation-AtlasLab.pdf`](./docs/Guide-Utilisation-AtlasLab.pdf) et
 [`Guide-Utilisation-Par-Role-AtlasLab.pdf`](./docs/Guide-Utilisation-Par-Role-AtlasLab.pdf)
-(édition du 10 août 2026 — **à rafraîchir** : ne couvre pas encore les tableaux de bord par rôle
-ni l'assistant IA d'aide à l'utilisation, ajoutés depuis).
+(édition du 18 août 2026 — décrit l'état réellement déployé sur `master` : couvre les tableaux
+de bord élève/professeur, ne mentionne plus l'assistant IA d'aide à l'utilisation, qui existe sur
+sa propre branche mais n'est pas en production).
 
 ## Démarrage
 
