@@ -1,6 +1,7 @@
 "use server";
 
 import Anthropic from "@anthropic-ai/sdk";
+import * as Sentry from "@sentry/nextjs";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
@@ -280,7 +281,15 @@ export async function generateCourseFromDocument(
       tool_choice: { type: "tool", name: "structurer_cours" },
       messages: [{ role: "user", content: userContent }],
     });
-  } catch {
+  } catch (err) {
+    // Auparavant un catch nu, sans aucune trace : une vraie panne ici
+    // (2026-08-18, ex. le crash pdf-parse/DOMMatrix corrige juste avant)
+    // etait totalement invisible cote serveur ET absente de Sentry (un
+    // catch avale l'erreur avant que Sentry.captureRequestError -- voir
+    // instrumentation.ts -- ne puisse la voir). Capture explicite pour que
+    // la vraie cause soit diagnosticable la prochaine fois.
+    console.error("Échec appel API Claude (generateCourseFromDocument) :", err);
+    Sentry.captureException(err);
     return { error: "Erreur lors de la génération IA — réessayez." };
   }
 
