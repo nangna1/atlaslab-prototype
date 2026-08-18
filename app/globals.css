@@ -224,4 +224,95 @@ h1, h2, h3, h4 {
     background: var(--surface-3);
     color: var(--text-muted);
   }
+
+  /* Rendu de contenu_markdown (voir components/LessonContent.tsx) - avant
+     ce style, le champ s'affichait tel quel en texte brut partout (**gras**
+     litteral, tableaux markdown illisibles) : reel, constate le 2026-08-18
+     sur un cours de beton arme genere par l'IA, riche en tableaux
+     techniques (types de dalles, coefficients...). Pas de plugin Tailwind
+     Typography ici (coherent avec le reste du projet, aucune dependance
+     CSS de ce genre ailleurs) - styles explicites sur chaque element. */
+  /* Pas de couleur de texte fixee ici : herite du parent (var(--text-2) sur
+     la fiche de lecon, text-gray-700 sur la vue imprimable, deliberement
+     neutre en gris - voir les deux points d'appel) plutot que d'imposer la
+     couleur de marque partout. */
+  .lesson-content {
+    @apply leading-[1.7];
+    font-size: 16.5px;
+  }
+  .lesson-content > :first-child {
+    margin-top: 0;
+  }
+  .lesson-content p,
+  .lesson-content ul,
+  .lesson-content ol,
+  .lesson-content blockquote {
+    @apply mb-4;
+  }
+  .lesson-content h1,
+  .lesson-content h2,
+  .lesson-content h3 {
+    @apply mt-6 mb-2.5 font-bold;
+  }
+  .lesson-content h1 {
+    @apply text-2xl;
+  }
+  .lesson-content h2 {
+    @apply text-xl;
+  }
+  .lesson-content h3 {
+    @apply text-lg;
+  }
+  .lesson-content strong {
+    font-weight: 700;
+  }
+  .lesson-content ul {
+    @apply list-disc ps-5;
+  }
+  .lesson-content ol {
+    @apply list-decimal ps-5;
+  }
+  .lesson-content li {
+    @apply mb-1;
+  }
+  .lesson-content li > p {
+    @apply mb-0;
+  }
+  .lesson-content code {
+    @apply rounded px-1 py-0.5 text-[0.9em];
+    background: var(--surface-3);
+  }
+  .lesson-content pre {
+    @apply mb-4 overflow-x-auto rounded-xl p-3.5;
+    background: var(--surface-3);
+  }
+  .lesson-content pre code {
+    @apply bg-transparent p-0;
+  }
+  .lesson-content blockquote {
+    @apply border-s-4 ps-3.5 italic;
+    border-color: var(--line-accent);
+    color: var(--text-muted);
+  }
+  .lesson-content hr {
+    @apply my-6;
+    border-color: var(--line);
+  }
+  .lesson-content table {
+    @apply w-full border-collapse overflow-hidden rounded-xl text-sm;
+    border: 1px solid var(--line);
+  }
+  .lesson-content th,
+  .lesson-content td {
+    @apply border px-3 py-2 text-start;
+    border-color: var(--line);
+  }
+  .lesson-content th {
+    font-weight: 700;
+    background: var(--surface-2);
+  }
+  .lesson-content a {
+    text-decoration: underline;
+    color: var(--accent);
+  }
 }

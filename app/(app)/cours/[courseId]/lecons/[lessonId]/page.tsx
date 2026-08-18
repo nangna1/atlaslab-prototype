@@ -4,6 +4,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import LaboEEcircuit from "@/components/LaboEEcircuit";
 import LaboCircuitVerse from "@/components/LaboCircuitVerse";
+import LessonContent from "@/components/LessonContent";
 import QuizPlayer from "./QuizPlayer";
 import CreateAssignmentForm from "./CreateAssignmentForm";
 import SubmissionForm from "./SubmissionForm";
@@ -274,9 +275,9 @@ export default async function LessonPage({
           <h1 className="mb-4.5 text-[34px] font-extrabold tracking-[-0.03em]">{lesson.titre}</h1>
 
           {lesson.contenu_markdown && (
-            <p className="mb-4 leading-[1.7] whitespace-pre-wrap" style={{ color: "var(--text-2)", fontSize: "16.5px" }}>
-              {lesson.contenu_markdown}
-            </p>
+            <div className="mb-4" style={{ color: "var(--text-2)" }}>
+              <LessonContent markdown={lesson.contenu_markdown} />
+            </div>
           )}
 
           {/* Masque a l'apprenant si le professeur a decoche l'autorisation

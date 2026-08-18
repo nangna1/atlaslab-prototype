@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import PrintButton from "./PrintButton";
+import LessonContent from "@/components/LessonContent";
 
 type Lesson = {
   id: string;
@@ -109,9 +110,9 @@ export default async function ImprimerCoursPage({
                   </h3>
 
                   {lesson.contenu_markdown && (
-                    <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-gray-700">
-                      {lesson.contenu_markdown}
-                    </p>
+                    <div className="mt-1 text-sm text-gray-700">
+                      <LessonContent markdown={lesson.contenu_markdown} />
+                    </div>
                   )}
 
                   {lesson.type === "labo" && lesson.labo_type === "eecircuit" && (
