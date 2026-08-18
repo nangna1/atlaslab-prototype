@@ -2,19 +2,15 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
-  // pdf-parse -> pdfjs-dist charge @napi-rs/canvas (binaire natif specifique
-  // a la plateforme) de facon dynamique -- le bundler Next.js ne le detecte
-  // pas correctement, ce qui casse l'extraction PDF en production (Vercel).
-  // On force ces paquets en require() natif Node plutot qu'en bundle.
-  serverExternalPackages: ["pdf-parse", "pdfjs-dist", "@napi-rs/canvas"],
-  // pdfjs-dist charge aussi son fichier "worker" (pdf.worker.mjs) par un
-  // chemin calcule dynamiquement -- le tracing de fichiers de Vercel ne le
-  // detecte pas et l'exclut du bundle serverless, faisant echouer
-  // l'extraction PDF ("Setting up fake worker failed"). On force son
-  // inclusion explicitement.
-  outputFileTracingIncludes: {
-    "/*": ["node_modules/pdfjs-dist/legacy/build/**/*"],
-  },
+  // Historique (retire le 2026-08-18) : pdf-parse/pdfjs-dist necessitaient
+  // ici serverExternalPackages + outputFileTracingIncludes pour tourner sur
+  // le serverless Vercel, et meme avec ca ont fini par planter en prod
+  // (pdfjs-dist depend de globals navigateur - DOMMatrix, Canvas - absents
+  // de ce runtime ; erreur Sentry reelle : "ReferenceError: DOMMatrix is
+  // not defined"). lib/document-text.ts:countPdfPages utilise desormais
+  // pdf-lib (pure JS, sans dependance DOM/binaire natif) - plus besoin de
+  // configuration Next.js particuliere pour le PDF.
+  //
   // Limite par defaut des Server Actions Next.js : 1 Mo (voir
   // node_modules/next/dist/docs/.../server-actions.md) - beaucoup trop bas
   // pour generateCourseFromDocument (app/(app)/cours/actions.ts), qui recoit

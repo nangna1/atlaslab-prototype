@@ -1,5 +1,5 @@
 import JSZip from "jszip";
-import { PDFParse } from "pdf-parse";
+import { PDFDocument } from "pdf-lib";
 
 // 100 000 caracteres (~25k tokens) : releve de 15 000 (2026-08-11), verifie
 // insuffisant sur un echantillon reel de 30 supports de cours fournis par
@@ -77,12 +77,20 @@ export async function extractDocumentText(
 // uniquement a la validation MAX_PDF_PAGES avant l'appel a Claude - un
 // echec de comptage ne doit pas bloquer l'import (retourne null, l'appelant
 // laisse alors passer et compte sur le controle de l'API Claude elle-meme).
+//
+// pdf-lib plutot que pdf-parse/pdfjs-dist (essaye en premier, 2026-08-18) :
+// pdfjs-dist repose sur des globals navigateur (DOMMatrix, Canvas) absents
+// de l'environnement serverless Vercel - crash reel constate en prod
+// ("Failed to load external module pdf-parse-...: ReferenceError: DOMMatrix
+// is not defined", capture Sentry), le meme genre de fragilite qui avait
+// deja fait abandonner l'extraction de texte par pdf-parse au profit de la
+// lecture native par Claude (voir plus haut). pdf-lib est une bibliotheque
+// de structure PDF pure JS, sans dependance DOM/canvas ni binaire natif -
+// adaptee a du serverless.
 export async function countPdfPages(buffer: Buffer): Promise<number | null> {
   try {
-    const parser = new PDFParse({ data: buffer });
-    const info = await parser.getInfo();
-    await parser.destroy();
-    return info.total ?? null;
+    const doc = await PDFDocument.load(buffer, { updateMetadata: false });
+    return doc.getPageCount();
   } catch (err) {
     console.error("Échec comptage des pages PDF :", err);
     return null;
