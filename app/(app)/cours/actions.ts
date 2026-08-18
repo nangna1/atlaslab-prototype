@@ -265,7 +265,17 @@ export async function generateCourseFromDocument(
 
   let response;
   try {
-    response = await anthropic.messages.create({
+    // .stream().finalMessage() plutot que .create() (2026-08-18, vrai echec
+    // constate en prod via Sentry) : le SDK Anthropic refuse un appel
+    // bloquant des qu'il estime que la reponse peut depasser 10 minutes --
+    // ("Error: Streaming is required for operations that may take longer
+    // than 10 minutes", voir
+    // https://github.com/anthropics/anthropic-sdk-typescript#long-requests)
+    // ce qui arrive avec un max_tokens eleve (24000, voir plus bas) combine
+    // a un vrai document dense lu nativement. Le streaming server-side ne
+    // change rien pour l'utilisateur (toujours une reponse synchrone une
+    // fois finalMessage() resolu) mais leve cette limite.
+    const stream = anthropic.messages.stream({
       model: "claude-sonnet-5",
       // Vrai bug trouve en testant sur un document reel (2026-08-11,
       // "COURS DE DESSIN 1ERE ANNEE.pdf", 87 pages) : a 4096, la reponse
@@ -281,6 +291,7 @@ export async function generateCourseFromDocument(
       tool_choice: { type: "tool", name: "structurer_cours" },
       messages: [{ role: "user", content: userContent }],
     });
+    response = await stream.finalMessage();
   } catch (err) {
     // Auparavant un catch nu, sans aucune trace : une vraie panne ici
     // (2026-08-18, ex. le crash pdf-parse/DOMMatrix corrige juste avant)
