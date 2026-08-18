@@ -14,11 +14,18 @@ const nextConfig: NextConfig = {
   // Limite par defaut des Server Actions Next.js : 1 Mo (voir
   // node_modules/next/dist/docs/.../server-actions.md) - beaucoup trop bas
   // pour generateCourseFromDocument (app/(app)/cours/actions.ts), qui recoit
-  // de vrais supports de cours PDF. Verifie reellement sur un echantillon de
-  // 30 documents fournis par l'utilisateur (2026-08-11, institut booster) :
-  // jusqu'a 16,5 Mo. 20mb laisse de la marge. A revalider si Vercel impose
-  // un plafond de plateforme plus bas que celui-ci pour les Server Actions
-  // (non confirme au moment de ce changement).
+  // de vrais supports de cours PDF. Releve a 20mb ici.
+  //
+  // Important (confirme le 2026-08-18, apres une vraie panne en prod) :
+  // cette valeur n'est PAS la vraie limite effective sur Vercel. La
+  // plateforme impose son propre plafond de corps de requete pour toute
+  // fonction serverless, 4,5 Mo, **en dessous de ce 20mb** et qu'aucune
+  // config Next.js ne peut relever (voir
+  // https://vercel.com/docs/functions/limitations#request-body-size). La
+  // vraie limite appliquee a l'utilisateur vit donc dans
+  // lib/document-limits.ts (calculee a partir de 4,5 Mo, pas de ce 20mb) -
+  // cette valeur-ci reste a 20mb seulement pour ne jamais etre elle-meme le
+  // goulot d'etranglement.
   experimental: {
     serverActions: {
       bodySizeLimit: "20mb",

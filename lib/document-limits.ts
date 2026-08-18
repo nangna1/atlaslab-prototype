@@ -4,15 +4,18 @@
 // dependance lourde pour rester importable des deux cotes.
 //
 // Deux vraies limites techniques :
-// - Taille : plafond de "body" des Server Actions Next.js, fixe a 20 Mo
-//   dans next.config.ts (experimental.serverActions.bodySizeLimit). Un
-//   fichier au-dela de ce plafond ne produit pas une erreur propre cote
-//   serveur (le corps de la requete est rejete par le framework avant
-//   d'atteindre generateCourseFromDocument) mais un ecran generique
-//   "Application error: a client-side exception has occurred" cote
-//   client - constate reellement le 2026-08-18 sur un cours de dessin
-//   volumineux. La seule parade fiable est d'empecher l'envoi en amont,
-//   cote client, avant que la requete ne parte.
+// - Taille : PAS le bodySizeLimit Next.js (20 Mo, next.config.ts) comme
+//   suppose au premier correctif (2026-08-18 matin) - Vercel impose sa
+//   propre limite de plateforme sur le corps d'une requete vers une
+//   fonction serverless, 4,5 Mo, **au-dessus de laquelle le body size
+//   limit de Next.js n'a plus aucun effet** (voir
+//   https://vercel.com/docs/functions/limitations#request-body-size). Un
+//   fichier au-dela produit la meme classe de panne cote client
+//   ("NetworkError when attempting to fetch resource" en pratique, ou
+//   l'ecran generique "Application error" selon le navigateur) - constate
+//   reellement en prod (2026-08-18 soir) malgre le premier correctif a
+//   16 Mo, qui restait sous le plafond Next.js mais au-dessus du vrai
+//   plafond Vercel. La vraie limite est donc 4,5 Mo, pas 20.
 // - Pages (PDF) : l'API Claude (Anthropic) refuse un document PDF natif de
 //   plus de 100 pages.
 //
@@ -21,12 +24,12 @@
 // pour qu'un fichier juste "dans les clous" cote utilisateur (poids
 // arrondi affiche par l'OS, export PDF qui ajoute une page de garde, etc.)
 // ne tombe jamais pile sur le point de rupture reel.
-const REAL_MAX_FILE_SIZE_MB = 20;
+const REAL_MAX_FILE_SIZE_MB = 4.5;
 const REAL_MAX_PDF_PAGES = 100;
 const SAFETY_MARGIN = 0.8;
 
-export const MAX_FILE_SIZE_MB = Math.floor(REAL_MAX_FILE_SIZE_MB * SAFETY_MARGIN); // 16 Mo
-export const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+export const MAX_FILE_SIZE_MB = Math.floor(REAL_MAX_FILE_SIZE_MB * SAFETY_MARGIN * 10) / 10; // 3.6 Mo
+export const MAX_FILE_SIZE_BYTES = Math.floor(MAX_FILE_SIZE_MB * 1024 * 1024);
 export const MAX_PDF_PAGES = Math.floor(REAL_MAX_PDF_PAGES * SAFETY_MARGIN); // 80 pages
 
 export function formatFileSize(bytes: number): string {
