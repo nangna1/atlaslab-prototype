@@ -1,0 +1,7 @@
+# public/pdf.worker.min.mjs (2026-08-19) : copie exacte et version-matchee
+# de node_modules/pdfjs-dist/build/pdf.worker.min.mjs (voir
+# lib/render-document-pages.ts) - toute conversion de fin de ligne (LF/CRLF)
+# au checkout risquerait de corrompre ce fichier minifie sur une machine
+# Windows avec core.autocrlf=true. Marque binaire pour que git ne le
+# touche jamais, peu importe la config locale de qui clone/deploie.
+public/pdf.worker.min.mjs -text
