@@ -405,17 +405,25 @@ export async function createSeance(
 
   if (!courseId || !dateHeure) return { error: "La date/heure est requise." };
 
+  // professeur_id de la seance = celui du COURS (pas du compte qui a
+  // rempli ce formulaire) - un admin_tenant/super_admin peut programmer une
+  // seance pour le compte d'un professeur (constate reellement le
+  // 2026-08-19 : bouton de partage de document introuvable car
+  // professeur_id valait NULL, la seance ayant ete creee par un admin).
+  // Avec l'ancien "callerProfile.role === 'professeur' ? caller.id : null",
+  // AUCUN professeur ne pouvait alors piloter le partage de document sur
+  // cette seance, meme le titulaire reel du cours.
+  const { data: course } = await supabase.from("courses").select("titre, professeur_id").eq("id", courseId).single();
+
   const isoDateHeure = new Date(dateHeure).toISOString();
   const { error } = await supabase.from("live_sessions").insert({
     course_id: courseId,
     date_heure: isoDateHeure,
     lien_visio: lienVisio || null,
-    professeur_id: callerProfile.role === "professeur" ? caller.id : null,
+    professeur_id: course?.professeur_id ?? null,
   });
 
   if (error) return { error: error.message };
-
-  const { data: course } = await supabase.from("courses").select("titre").eq("id", courseId).single();
   const dateLabel = new Date(isoDateHeure).toLocaleString("fr-FR", { dateStyle: "medium", timeStyle: "short" });
   const lien = `/cours/${courseId}`;
 

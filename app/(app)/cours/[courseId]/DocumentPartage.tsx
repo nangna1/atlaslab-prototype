@@ -45,12 +45,22 @@ export default function DocumentPartage({
   useEffect(() => {
     const supabase = createClient();
     let annule = false;
-    getLiveDocument(supabase, liveSessionId).then((initial) => {
-      if (!annule) {
-        setDoc(initial);
-        setChargement(false);
-      }
-    });
+    getLiveDocument(supabase, liveSessionId)
+      .then((initial) => {
+        if (!annule) setDoc(initial);
+      })
+      .catch((err) => {
+        // Sans ce .catch(), un echec reseau ici (constate reellement en
+        // prod, "TypeError: Failed to fetch") restait une promesse rejetee
+        // non geree : chargement ne repassait jamais a false, donc
+        // DocumentPartage restait bloque sur `return null` pour toujours -
+        // le bouton de partage semblait alors completement absent, meme
+        // pour le bon professeur.
+        console.error("live-document: échec du chargement initial", err);
+      })
+      .finally(() => {
+        if (!annule) setChargement(false);
+      });
     const desabonner = subscribeLiveDocument(supabase, liveSessionId, (mise_a_jour) => setDoc(mise_a_jour));
     return () => {
       annule = true;
