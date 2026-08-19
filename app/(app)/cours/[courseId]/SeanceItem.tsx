@@ -4,8 +4,9 @@ import { useState } from "react";
 import { deleteSeance } from "./actions";
 import AttendanceForm from "./AttendanceForm";
 import VideoRoom from "./VideoRoom";
+import DocumentPartage from "./DocumentPartage";
 
-type Seance = { id: string; date_heure: string; lien_visio: string | null };
+type Seance = { id: string; date_heure: string; lien_visio: string | null; professeur_id: string | null };
 
 const STATUT_BADGE: Record<string, { label: string; className: string }> = {
   present: { label: "Présent", className: "badge-success" },
@@ -17,6 +18,7 @@ export default function SeanceItem({
   courseId,
   seance,
   isStaff,
+  estProfesseurTitulaire,
   monStatut,
   eleves,
   attendanceParEleve,
@@ -24,6 +26,7 @@ export default function SeanceItem({
   courseId: string;
   seance: Seance;
   isStaff: boolean;
+  estProfesseurTitulaire: boolean;
   monStatut?: string;
   eleves?: { user_id: string; nom: string }[];
   attendanceParEleve?: Record<string, string>;
@@ -83,7 +86,16 @@ export default function SeanceItem({
           initialStatuts={attendanceParEleve ?? {}}
         />
       )}
-      {!seance.lien_visio && showVideo && <VideoRoom seanceId={seance.id} />}
+      {!seance.lien_visio && showVideo && (
+        <>
+          <VideoRoom seanceId={seance.id} />
+          <DocumentPartage
+            liveSessionId={seance.id}
+            estProfesseurTitulaire={estProfesseurTitulaire}
+            professeurId={seance.professeur_id ?? ""}
+          />
+        </>
+      )}
     </div>
   );
 }

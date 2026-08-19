@@ -57,6 +57,7 @@ const SIGNATURES = [
   ["20260807000000_rate_limit_attempts.sql", "rate_limit_attempts", null],
   ["20260809000000_assistant_messages.sql", "assistant_messages", null],
   ["20260811000000_piece_jointe_telechargement.sql", "lessons", "piece_jointe_telechargeable"],
+  ["20260819000000_live_session_documents.sql", "live_session_documents", null],
 ];
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

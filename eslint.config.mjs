@@ -12,6 +12,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // public/pdf.worker.min.mjs (2026-08-19) : copie minifiee de
+    // node_modules/pdfjs-dist/build/pdf.worker.min.mjs (voir
+    // lib/render-document-pages.ts) - du code vendor, jamais du code source
+    // de ce projet, ne doit jamais etre linte (une seule ligne minifiee de
+    // ~1 Mo faisait planter eslint sur des milliers de faux positifs).
+    "public/pdf.worker.min.mjs",
   ]),
 ]);
 

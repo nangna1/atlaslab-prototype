@@ -151,7 +151,7 @@ export default async function CoursDetailPage({
 
   const { data: seances } = await supabase
     .from("live_sessions")
-    .select("id, date_heure, lien_visio")
+    .select("id, date_heure, lien_visio, professeur_id")
     .eq("course_id", courseId)
     .order("date_heure");
 
@@ -224,6 +224,7 @@ export default async function CoursDetailPage({
                 courseId={course.id}
                 seance={seance}
                 isStaff={isStaff}
+                estProfesseurTitulaire={seance.professeur_id === user.id}
                 monStatut={monStatutParSeance.get(seance.id)}
                 eleves={isStaff ? eleves.map((e) => ({ user_id: e.user_id, nom: e.nom })) : undefined}
                 attendanceParEleve={isStaff ? attendanceParSeance.get(seance.id) ?? {} : undefined}
