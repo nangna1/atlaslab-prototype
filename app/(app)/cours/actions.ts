@@ -322,7 +322,19 @@ export async function generateCourseFromDocument(
   }
 
   const parsed = parseCourseTemplate(toolUse.input);
-  if ("error" in parsed) return { error: `Résultat IA invalide : ${parsed.error}` };
+  if ("error" in parsed) {
+    // Jusqu'ici invisible : aucun log ne permettait de savoir CE que Claude
+    // avait reellement renvoye quand parseCourseTemplate rejette le
+    // resultat (ex. "titre du cours requis") - impossible de distinguer une
+    // vraie deviation de schema d'une troncature non detectee par le
+    // controle stop_reason === "max_tokens" ci-dessus. Log du JSON complet
+    // (dans les limites Sentry) pour diagnostiquer la prochaine occurrence.
+    console.error("Échec parseCourseTemplate (generateCourseFromDocument) :", parsed.error, "-- entrée reçue :", JSON.stringify(toolUse.input).slice(0, 4000));
+    Sentry.captureException(new Error(`parseCourseTemplate: ${parsed.error}`), {
+      extra: { stopReason: response.stop_reason, toolInput: JSON.stringify(toolUse.input).slice(0, 4000) },
+    });
+    return { error: `Résultat IA invalide : ${parsed.error}` };
+  }
 
   const result = await insertCourseFromTemplate(
     supabase,
