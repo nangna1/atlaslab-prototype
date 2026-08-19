@@ -514,7 +514,9 @@ export async function markAttendance(
   return { success: true };
 }
 
-export type VideoTokenResult = { token: string; roomName: string; appId: string } | { error: string };
+export type VideoTokenResult =
+  | { token: string; roomName: string; appId: string; moderator: boolean; userId: string; nom: string }
+  | { error: string };
 
 // Genere un jeton JaaS (JWT) pour rejoindre une seance en tant que
 // moderateur (staff) ou participant simple. Le statut moderateur est
@@ -560,6 +562,9 @@ export async function getVideoToken(seanceId: string): Promise<VideoTokenResult>
     token,
     roomName: jaasRoomName(seanceId),
     appId: process.env.JAAS_APP_ID!,
+    moderator,
+    userId: caller.id,
+    nom: callerProfile.nom,
   };
 }
 

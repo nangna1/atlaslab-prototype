@@ -50,9 +50,21 @@ export function generateJaasToken({
       },
       features: {
         livestreaming: false,
-        recording: false,
+        // L'enregistrement est demande par le client (bouton "Demander
+        // l'enregistrement" pour un apprenant, cf VideoRoom.tsx), mais ne
+        // doit pouvoir etre reellement declenche que par le titulaire du
+        // jeton moderateur -- sinon un apprenant pourrait appeler
+        // executeCommand('startRecording', ...) directement depuis la
+        // console du navigateur en contournant le flux de demande.
+        recording: moderator,
         transcription: false,
         "outbound-call": false,
+        // Sans ceci, un apprenant pouvait inviter n'importe qui (y compris
+        // en dehors de la classe) via le bouton "Inviter" du salon --
+        // constate reellement le 2026-08-19. JaaS applique ce flag cote
+        // serveur (masque et bloque le bouton pour ce jeton), donc ce n'est
+        // pas contournable en modifiant le JS cote client.
+        invite: moderator,
       },
     },
   };
